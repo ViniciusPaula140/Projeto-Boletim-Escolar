@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: boletim-escolar
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
+    autoDeploy: true
+    # Configurações de segurança e performance
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
+    # Configurações de cache
+    cache:
+      - path: /static/*
+        ttl: 86400
+      - path: /assets/*
+        ttl: 86400
+    # Configurações de rede
+    network:
+      - port: 10000
+        protocol: http
+    # Configurações de recursos
+    resources:
+      cpu: 0.1
+      memory: 512MB
+      disk: 1GB
+    # Configurações de monitoramento
+    monitoring:
+      enabled: true
+      alerts:
+        - type: error
+          threshold: 5
+          window: 5m
+        - type: latency
+          threshold: 1000
+          window: 5m 

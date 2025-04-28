@@ -27,5 +27,43 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@tanstack/react-query',
+            'chart.js',
+            'recharts'
+          ],
+          'ui': [
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-toast'
+          ],
+          'utils': [
+            'date-fns',
+            'zod',
+            'clsx',
+            'tailwind-merge'
+          ]
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000,
+    sourcemap: true
   },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
+  }
 });
