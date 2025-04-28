@@ -1116,7 +1116,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Cabeçalho único: Disciplina | ATV1 | ATV2 | ATV3 | ATV4 | MÉDIA
       let xPos = margin;
       const rowHeight = 7;
-      const headers = ['Disciplina', ...activities.map(a => a.name), 'MÉDIA'];
+      const headers = ['Disciplina', ...activities.map(a => a.name.replace('ATV', 'AV')), 'MÉDIA'];
       const colWidths = [nameColWidth, ...Array(activities.length).fill(dataColWidth), dataColWidth];
       
       headers.forEach((header, i) => {
