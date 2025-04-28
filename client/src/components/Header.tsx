@@ -52,7 +52,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-gradient-to-r from-red-500 via-green-400 to-green-600 shadow-lg">
+    <header className="bg-gradient-to-r from-purple-700 via-fuchsia-500 to-indigo-600 shadow-lg">
       <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
         <div className="flex items-center mb-4 md:mb-0">
           {/* Logo da escola Arco-íris */}

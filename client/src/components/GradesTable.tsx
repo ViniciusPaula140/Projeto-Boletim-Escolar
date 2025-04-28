@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { 
@@ -60,7 +60,7 @@ const DEFAULT_ACTIVITIES: Activity[] = [
  * @param {GradesTableProps} props - Propriedades do componente
  * @returns {JSX.Element} Elemento JSX que representa a tabela de notas
  */
-const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
+const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) => {
   // Pega o id da URL
   const [match, params] = useRoute('/students/:id');
   const studentId = params?.id;
@@ -988,6 +988,10 @@ const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
     }
   };
   
+  useImperativeHandle(ref, () => ({
+    openExportModal: () => setShowExportModal(true)
+  }));
+  
   if (!student) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-lg shadow-md border border-indigo-100 mt-8">
@@ -1028,14 +1032,6 @@ const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
               Editar dados do Aluno
             </Button>
           )}
-          <Button 
-            onClick={() => setShowExportModal(true)}
-            className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center shadow-sm"
-            size="sm"
-          >
-            <span className="material-icons text-sm mr-1">download</span>
-            Exportar
-          </Button>
           <Button 
             onClick={clearData}
             className="px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition flex items-center shadow-sm"
@@ -1436,6 +1432,6 @@ const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
       )}
     </section>
   );
-};
+});
 
 export default GradesTable;

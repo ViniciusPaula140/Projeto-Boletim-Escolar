@@ -35,7 +35,9 @@ async function registerRoutes(app2) {
   app2.put("/api/alunos/:id", async (req, res) => {
     const { id } = req.params;
     const { name, class: turma, shift } = req.body;
-    const { data, error } = await supabase.from("students").update({ name, class: turma, shift }).eq("id", id).select();
+    const updateObj = { name, shift };
+    updateObj["class"] = turma;
+    const { data, error } = await supabase.from("students").update(updateObj).eq("id", id).select();
     if (error) return res.status(400).json({ error: error.message });
     res.json(data[0]);
   });
@@ -227,7 +229,7 @@ async function setupVite(app2, server) {
     appType: "custom"
   });
   app2.use(vite.middlewares);
-  app2.use("*", async (req, res, next) => {
+  app2.get("*", async (req, res, next) => {
     const url = req.originalUrl;
     try {
       const clientTemplate = path2.resolve(
@@ -257,7 +259,7 @@ function serveStatic(app2) {
     );
   }
   app2.use(express.static(distPath));
-  app2.use("*", (_req, res) => {
+  app2.get("*", (_req, res) => {
     res.sendFile(path2.resolve(distPath, "index.html"));
   });
 }
@@ -392,3 +394,7 @@ app.use((req, res, next) => {
     console.log("==========================================\n");
   });
 })();
+app.use((req, res, next) => {
+  console.log(`[DEBUG] ${req.method} ${req.originalUrl}`);
+  next();
+});
