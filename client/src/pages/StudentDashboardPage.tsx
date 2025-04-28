@@ -16,7 +16,10 @@ const StudentDashboardPage: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 py-6 flex-grow">
         <ExportUnitButtons 
-          onExportBoletim={() => gradesTableRef.current?.openExportModal()} 
+          onExportBoletim={() => gradesTableRef.current?.openExportModal()}
+          onExportUnit1={() => gradesTableRef.current?.exportUnit(1)}
+          onExportUnit2={() => gradesTableRef.current?.exportUnit(2)}
+          onExportUnit3={() => gradesTableRef.current?.exportUnit(3)}
           exportBoletimDisabled={exportBoletimDisabled}
         />
         <GradesTable ref={gradesTableRef} passingGrade={7.0} />

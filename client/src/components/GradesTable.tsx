@@ -989,8 +989,240 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
   };
   
   useImperativeHandle(ref, () => ({
-    openExportModal: () => setShowExportModal(true)
+    openExportModal: () => setShowExportModal(true),
+    exportUnit: (unitId: number) => exportUnitBoletim(unitId)
   }));
+  
+  // Função para exportar boletim de uma unidade específica
+  const exportUnitBoletim = (unitId: number) => {
+    if (!student) {
+      alert('Selecione um aluno para exportar as notas.');
+      return;
+    }
+    // Exportar em PDF (pode ser expandido para Excel se desejar)
+    exportUnitToPDF(unitId);
+  };
+
+  const exportUnitToPDF = (unitId: number) => {
+    if (!student) return;
+    try {
+      if (typeof jsPDF !== 'function') throw new Error('jsPDF não está carregado corretamente');
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      const headerHeight = 28;
+      doc.setFillColor(229, 57, 53); // Vermelho igual ao geral
+      doc.rect(0, 0, pageWidth, headerHeight, 'F');
+      const img = new Image();
+      img.src = escolinhaLogo;
+      const logoHeight = 20;
+      const logoY = (headerHeight - logoHeight) / 2;
+      doc.addImage(img, 'PNG', margin + 6, logoY, 20, logoHeight);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(255,255,255);
+      doc.text('BOLETIM ESCOLAR', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+      doc.setFillColor(240, 240, 250);
+      doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
+      doc.setDrawColor(140, 140, 140);
+      doc.setLineWidth(0.7);
+      doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'S');
+      doc.setLineWidth(0.2);
+      doc.setDrawColor(60, 60, 100);
+      doc.setFontSize(12);
+      doc.setTextColor(60, 60, 100);
+      doc.text(`Aluno: ${student.name}`, margin + 5, 33);
+      doc.text(`Turma: ${student.class}`, margin + 5, 40);
+      doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
+      doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
+      // Box superior da tabela
+      let yPos = 50;
+      doc.setFillColor(67, 160, 71); // Verde igual ao geral
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text('QUADRO DE NOTAS', pageWidth / 2, yPos + 5, { align: 'center' });
+      // Cabeçalhos da tabela
+      yPos += 8;
+      doc.setFillColor(200, 230, 201); // Verde claro igual ao geral
+      const totalWidth = pageWidth - 2 * margin;
+      const nameColWidth = totalWidth * 0.13;
+      const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / (activities.length + 1);
+      // Cabeçalho duplo
+      let xPos = margin;
+      const rowHeight = 7;
+      // Primeira linha
+      doc.setFillColor(200, 230, 201);
+      doc.setDrawColor(255, 255, 255);
+      doc.rect(xPos, yPos, nameColWidth, rowHeight, 'F');
+      doc.setFontSize(9);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Disciplina', xPos + nameColWidth / 2, yPos + 5, { align: 'center' });
+      xPos += nameColWidth;
+      doc.rect(xPos, yPos, dataColWidth * activities.length, rowHeight, 'F');
+      doc.text(units.find(u => u.id === unitId)?.name || '', xPos + (dataColWidth * activities.length) / 2, yPos + 5, { align: 'center' });
+      xPos += dataColWidth * activities.length;
+      doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
+      doc.text('MÉDIA', xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+      // Segunda linha
+      xPos = margin + nameColWidth;
+      yPos += rowHeight;
+      activities.forEach(activity => {
+        doc.setFillColor(200, 230, 201);
+        doc.setDrawColor(255, 255, 255);
+        doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        doc.text(activity.name, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+        xPos += dataColWidth;
+      });
+      doc.setFillColor(200, 230, 201);
+      doc.setDrawColor(255, 255, 255);
+      doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor(0, 0, 0);
+      doc.text('MÉDIA', xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+      // Linhas das disciplinas
+      subjects.forEach((subject, index) => {
+        yPos += rowHeight;
+        xPos = margin;
+        if (index % 2 === 0) {
+          doc.setFillColor(245, 245, 255);
+          doc.rect(xPos, yPos, totalWidth, rowHeight, 'F');
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 80);
+        doc.text(subject.name, xPos + 3, yPos + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        xPos += nameColWidth;
+        activities.forEach(activity => {
+          const grade = grades[`${subject.id}-${unitId}-${activity.id}`] || '';
+          doc.setTextColor(50, 50, 80);
+          doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+          xPos += dataColWidth;
+        });
+        // Média da unidade
+        const unitAvg = getUnitAverage(subject.id, unitId);
+        doc.setFont('helvetica', 'bold');
+        if (parseFloat(unitAvg) >= 7) {
+          doc.setTextColor(0, 150, 0);
+        } else {
+          doc.setTextColor(200, 0, 0);
+        }
+        doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+      });
+      // Gráfico de desempenho por disciplina (média da unidade)
+      yPos += 15;
+      doc.setFillColor(67, 160, 71);
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ANÁLISE DE DESEMPENHO', pageWidth / 2, yPos + 5, { align: 'center' });
+      yPos += 15;
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 100);
+      doc.text('Desempenho por Disciplina:', margin, yPos);
+      // Gráfico de barras
+      const graphStartY = yPos + 5;
+      const barHeight = 6;
+      const barGap = 2;
+      const maxBarValue = 10;
+      const maxBarWidth = 120;
+      const labelWidth = 50;
+      for (let i = 0; i <= maxBarValue; i += 2) {
+        const x = margin + labelWidth + (i / maxBarValue) * maxBarWidth;
+        doc.setFillColor(230, 230, 230);
+        doc.rect(x, graphStartY, 0.5, subjects.length * (barHeight + barGap) + 5, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text(i.toString(), x, graphStartY - 2, { align: 'center' });
+      }
+      subjects.forEach((subject, index) => {
+        const barY = graphStartY + 5 + index * (barHeight + barGap);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(60, 60, 100);
+        let subjectName = subject.name;
+        if (subjectName.length > 15) subjectName = subjectName.substring(0, 12) + '...';
+        doc.text(subjectName, margin, barY + barHeight/2 + 1);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        // Média da unidade
+        const unitAvg = getUnitAverage(subject.id, unitId);
+        const value = unitAvg === '-' ? 0 : parseFloat(unitAvg);
+        if (value < 7) {
+          doc.setFillColor(229, 57, 53);
+        } else if (value >= 7 && value < 9) {
+          doc.setFillColor(67, 160, 71);
+        } else {
+          doc.setFillColor(255, 215, 0);
+        }
+        const barWidth = (value / maxBarValue) * maxBarWidth;
+        doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.text(unitAvg, margin + labelWidth + barWidth + 3, barY + barHeight/2 + 1);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+      });
+      doc.setFillColor(200, 230, 201);
+      doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
+      const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
+      doc.setFillColor(229, 57, 53);
+      doc.rect(margin, legendY, 10, 5, 'F');
+      doc.setFillColor(67, 160, 71);
+      doc.rect(margin + 80, legendY, 10, 5, 'F');
+      doc.setFillColor(255, 215, 0);
+      doc.rect(margin + 160, legendY, 10, 5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text('Abaixo de 7', margin + 13, legendY + 4);
+      doc.text('Entre 7 e 9', margin + 93, legendY + 4);
+      doc.text('Acima de 9', margin + 173, legendY + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      // Assinatura
+      let yPosEnd = legendY + 15;
+      yPosEnd = Math.min(yPosEnd + 10, pageHeight - 35);
+      doc.setFillColor(240, 240, 250);
+      doc.rect(margin + 20, yPosEnd - 5, pageWidth - 2 * (margin + 20), 40, 'F');
+      const assinaturaWidth = 80;
+      const assinaturaX = pageWidth / 2 - assinaturaWidth / 2;
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.4);
+      doc.line(assinaturaX, yPosEnd + 15, assinaturaX + assinaturaWidth, yPosEnd + 15);
+      doc.setLineWidth(0.2);
+      doc.setDrawColor(60, 60, 100);
+      doc.setFontSize(11);
+      doc.setTextColor(100, 100, 150);
+      doc.text('Assinatura do Responsável', pageWidth / 2, yPosEnd + 20, { align: 'center' });
+      // Footer
+      const footerHeight = 22;
+      doc.setFillColor(67, 160, 71);
+      doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Coordenação Pedagógica:', margin, pageHeight - 8);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Marinilda da Cruz de Jesus de Carvalho', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      const filename = `boletim_${student.name.replace(/\s+/g, '_')}_unidade${unitId}.pdf`;
+      doc.save(filename);
+      console.log(`PDF gerado com sucesso: ${filename}`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Houve um erro ao gerar o PDF. Por favor, tente novamente.');
+    }
+  };
   
   if (!student) {
     return (
