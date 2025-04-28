@@ -49,10 +49,10 @@ const DEFAULT_UNITS: Unit[] = [
 ];
 
 const DEFAULT_ACTIVITIES: Activity[] = [
-  { id: 1, name: 'ATV1' },
-  { id: 2, name: 'ATV2' },
-  { id: 3, name: 'ATV3' },
-  { id: 4, name: 'ATV4' }
+  { id: 1, name: 'AV1' },
+  { id: 2, name: 'AV2' },
+  { id: 3, name: 'AV3' },
+  { id: 4, name: 'AV4' }
 ];
 
 /**
@@ -1113,7 +1113,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const nameColWidth = totalWidth * 0.13;
       const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / (activities.length + 1);
       
-      // Cabeçalho único: Disciplina | ATV1 | ATV2 | ATV3 | ATV4 | MÉDIA
+      // Cabeçalho único: Disciplina | AV1 | AV2 | AV3 | AV4 | MÉDIA
       let xPos = margin;
       const rowHeight = 7;
       const headers = ['Disciplina', ...activities.map(a => a.name.replace('ATV', 'AV')), 'MÉDIA'];

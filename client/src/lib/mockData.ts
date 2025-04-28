@@ -34,12 +34,11 @@ export const mockUnits: Unit[] = [
 ];
 
 // Atividades padrão
-export const mockActivities: Activity[] = [
-  { id: 1, name: 'ATV1' },
-  { id: 2, name: 'ATV2' },
-  { id: 3, name: 'ATV3' },
-  { id: 4, name: 'ATV4' },
-  { id: 5, name: 'ATV5' }
+export const DEFAULT_ACTIVITIES: Activity[] = [
+  { id: 1, name: 'AV1' },
+  { id: 2, name: 'AV2' },
+  { id: 3, name: 'AV3' },
+  { id: 4, name: 'AV4' },
 ];
 
 /**
