@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Sistema de Professores | Escola Arco-íris</title>
+    <!-- Importação do Angular (versão esm) -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/zone.js@0.13.0/dist/zone.min.js"></script>
+    <script type="text/javascript">
+      // Define as variáveis globais que identificam quando o Angular estiver carregado
+      window.angularLoaded = false;
+      window.onAngularReady = function() {
+        window.angularLoaded = true;
+        // Dispara evento para informar que o Angular foi carregado
+        document.dispatchEvent(new Event('angular-ready'));
+      };
+    </script>
+    <!-- Importação do Vue (versão esm) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "vue": "https://cdn.jsdelivr.net/npm/vue@3.3.4/dist/vue.esm-browser.prod.js"
+        }
+      }
+    </script>
+    <!-- Fontes do Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Favicon arco-íris -->
+    <link rel="icon" type="image/svg+xml" href="/src/assets/rainbow.svg" />
+    <!-- Chart.js para o dashboard -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- Script para replit dev banner -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>

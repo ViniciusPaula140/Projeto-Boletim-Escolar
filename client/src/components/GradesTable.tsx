@@ -1,0 +1,1446 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+import { 
+  Student, 
+  Subject, 
+  Unit, 
+  Activity, 
+  Grade, 
+  GradesMap 
+} from '@/lib/types';
+import { eventBus } from '@/lib/eventBus';
+import { calculateAverage, formatGrade, getColorByIndex } from '@/lib/utils';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { fetchNotasAluno, fetchAlunos, deletarAluno } from '@/lib/api';
+import { useRoute, useLocation } from 'wouter';
+import escolinhaLogo from '../assets/escolinha-arco-iris.png';
+import checkIcon from '../assets/check.png';
+
+// Definição das propriedades do componente
+interface GradesTableProps {
+  passingGrade: number;
+}
+
+// Valores padrão para as disciplinas e unidades
+const DEFAULT_SUBJECTS: Subject[] = [
+  { id: 1, name: 'Português' },
+  { id: 2, name: 'Matemática' },
+  { id: 3, name: 'História' },
+  { id: 4, name: 'Geografia' },
+  { id: 5, name: 'Ciências' }
+];
+
+const DEFAULT_UNITS: Unit[] = [
+  { id: 1, name: 'I Unidade' },
+  { id: 2, name: 'II Unidade' },
+  { id: 3, name: 'III Unidade' }
+];
+
+const DEFAULT_ACTIVITIES: Activity[] = [
+  { id: 1, name: 'ATV1' },
+  { id: 2, name: 'ATV2' },
+  { id: 3, name: 'ATV3' },
+  { id: 4, name: 'ATV4' }
+];
+
+/**
+ * Componente React para exibir e gerenciar a tabela de notas
+ * @param {GradesTableProps} props - Propriedades do componente
+ * @returns {JSX.Element} Elemento JSX que representa a tabela de notas
+ */
+const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
+  // Pega o id da URL
+  const [match, params] = useRoute('/students/:id');
+  const studentId = params?.id;
+
+  const [student, setStudent] = useState<Student | null>(null);
+  const [grades, setGrades] = useState<GradesMap>({});
+
+  // Busca o aluno pelo ID da URL
+  useEffect(() => {
+    if (studentId) {
+      fetchAlunos().then((alunos: Student[]) => {
+        const found = alunos.find((a: Student) => String(a.id) === String(studentId));
+        setStudent(found || null);
+      });
+    }
+  }, [studentId]);
+
+  // Busca as notas do aluno
+  useEffect(() => {
+    if (studentId) {
+      fetchNotasAluno(Number(studentId)).then((gradesArray: any[]) => {
+        // Tipando o objeto como GradesMap
+        const gradesMap: GradesMap = {};
+        gradesArray.forEach((grade: any) => {
+          const key = `${grade.subject_id}-${grade.unit_id}-${grade.activity_id}`;
+          gradesMap[key] = String(grade.value);
+        });
+        setGrades(gradesMap);
+      });
+    }
+  }, [studentId]);
+
+  // Estado para as disciplinas e unidades
+  const [subjects, setSubjects] = useState<Subject[]>(DEFAULT_SUBJECTS);
+  const [units, setUnits] = useState<Unit[]>(DEFAULT_UNITS);
+  const [activities] = useState<Activity[]>(DEFAULT_ACTIVITIES);
+  
+  // Estados para modais
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  
+  // Novas disciplina e unidade (para adicionar)
+  const [newSubjectName, setNewSubjectName] = useState('');
+  const [newUnitName, setNewUnitName] = useState('');
+  
+  // Estado para exportação de PDF
+  const [exportFormat, setExportFormat] = useState('pdf');
+  const [includeAnalytics, setIncludeAnalytics] = useState(true);
+  
+  // Estado para controlar carregamento ao salvar notas
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [, navigate] = useLocation();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', class: '', shift: '' });
+  const [isEditing, setIsEditing] = useState(false);
+  
+  /**
+   * Adiciona uma nova disciplina à tabela
+   */
+  const addSubject = () => {
+    // Verifica se o nome não está vazio
+    if (!newSubjectName.trim()) {
+      alert('Por favor, informe o nome da disciplina');
+      return;
+    }
+    
+    // Cria uma nova disciplina
+    const newSubject: Subject = {
+      id: Math.max(0, ...subjects.map(s => s.id)) + 1,
+      name: newSubjectName
+    };
+    
+    // Adiciona a disciplina ao estado
+    setSubjects([...subjects, newSubject]);
+    setNewSubjectName('');
+    setShowSubjectModal(false);
+  };
+  
+  /**
+   * Adiciona uma nova unidade à tabela
+   */
+  const addUnit = () => {
+    // Verifica se o nome não está vazio
+    if (!newUnitName.trim()) {
+      alert('Por favor, informe o nome da unidade');
+      return;
+    }
+    
+    // Cria uma nova unidade
+    const newUnit: Unit = {
+      id: Math.max(0, ...units.map(u => u.id)) + 1,
+      name: newUnitName
+    };
+    
+    // Adiciona a unidade ao estado
+    setUnits([...units, newUnit]);
+    setNewUnitName('');
+    setShowUnitModal(false);
+  };
+  
+  /**
+   * Limpa todos os dados da tabela
+   */
+  const clearData = () => {
+    if (window.confirm('Tem certeza que deseja limpar todos os dados da tabela?')) {
+      setGrades({});
+    }
+  };
+  
+  /**
+   * Atualiza a nota de uma atividade
+   * @param {number} subjectId - ID da disciplina
+   * @param {number} unitId - ID da unidade
+   * @param {number} activityId - ID da atividade
+   * @param {string} value - Valor da nota (string)
+   */
+  const updateGrade = (subjectId: number, unitId: number, activityId: number, value: string) => {
+    const key = `${subjectId}-${unitId}-${activityId}`;
+    
+    // Verifica se o valor é um número válido
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 10) {
+      return;
+    }
+    
+    // Atualiza o estado das notas
+    const newGrades = { ...grades };
+    newGrades[key] = value;
+    setGrades(newGrades);
+    
+    // Emite evento para atualizar outros componentes
+    eventBus.emit('grades-updated', newGrades);
+    
+    // Aqui seria feita uma chamada para API para salvar a nota
+    // fetch(`/api/grades/${student.id}`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ subjectId, unitId, activityId, value: numValue })
+    // })
+    //   .then(res => res.json())
+    //   .then(data => console.log('Nota salva:', data))
+    //   .catch(err => console.error('Erro ao salvar nota:', err));
+  };
+  
+  /**
+   * Exporta as notas para PDF ou Excel
+   */
+  const exportGrades = () => {
+    if (!student) {
+      alert('Selecione um aluno para exportar as notas.');
+      setShowExportModal(false);
+      return;
+    }
+    
+    if (exportFormat === 'pdf') {
+      exportToPDF();
+    } else {
+      exportToExcel();
+    }
+    
+    setShowExportModal(false);
+  };
+  
+  /**
+   * Exporta as notas em formato PDF
+   */
+  const exportToPDF = () => {
+    if (!student) return;
+    
+    try {
+      // Verificar se jsPDF está disponível
+      if (typeof jsPDF !== 'function') {
+        throw new Error('jsPDF não está carregado corretamente');
+      }
+      
+      // Criar documento básico
+      const doc = new jsPDF();
+      
+      // Configurações básicas
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      
+      // Cabeçalho vermelho
+      const headerHeight = 28;
+      doc.setFillColor(229, 57, 53);
+      doc.rect(0, 0, pageWidth, headerHeight, 'F');
+      // Logo centralizada verticalmente
+      const img = new Image();
+      img.src = escolinhaLogo;
+      const logoHeight = 20;
+      const logoY = (headerHeight - logoHeight) / 2;
+      doc.addImage(img, 'PNG', margin + 6, logoY, 20, logoHeight);
+      // Título estilizado
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.setTextColor(255,255,255);
+      doc.text('BOLETIM ESCOLAR', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+      
+      // Box para informações do aluno
+      doc.setFillColor(240, 240, 250); // Fundo claro
+      doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
+      // Borda do retângulo
+      doc.setDrawColor(140, 140, 140); // Cinza mais claro
+      doc.setLineWidth(0.7);
+      doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'S');
+      doc.setLineWidth(0.2); // volta ao padrão
+      doc.setDrawColor(60, 60, 100); // volta ao padrão
+      
+      // Informações do aluno
+      doc.setFontSize(12);
+      doc.setTextColor(60, 60, 100);
+      doc.text(`Aluno: ${student.name}`, margin + 5, 33);
+      doc.text(`Turma: ${student.class}`, margin + 5, 40);
+      
+      doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
+      doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
+      
+      // Box superior da tabela
+      let yPos = 50;
+      doc.setFillColor(67, 160, 71); // Verde para cabeçalho de tabela
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+      
+      // Título da tabela
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text('QUADRO DE NOTAS', pageWidth / 2, yPos + 5, { align: 'center' });
+      
+      // Cabeçalhos da tabela
+      yPos += 8;
+      doc.setFillColor(200, 230, 201); // Verde claro
+      
+      // Ajustar larguras para ocupar toda a largura útil do PDF
+      const totalWidth = pageWidth - 2 * margin;
+      const nameColWidth = totalWidth * 0.13; // 13% para o nome da disciplina
+      const numDataCols = (units.length - 1) * (activities.length + 1) + (activities.length + 2); // última unidade tem +1 coluna
+      const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / numDataCols;
+      
+      // Cabeçalho duplo ajustado
+      let xPos = margin;
+      const rowHeight = 7;
+      let header1 = [];
+      let header2 = [];
+      header1.push({ text: 'Disciplina', width: nameColWidth });
+      header2.push({ text: '', width: nameColWidth });
+      for (let u = 0; u < units.length; u++) {
+        if (u < units.length - 1) {
+          header1.push({ text: units[u].name, width: dataColWidth * (activities.length + 1) });
+          for (let a = 0; a < activities.length; a++) {
+            header2.push({ text: activities[a].name, width: dataColWidth });
+          }
+          header2.push({ text: 'MÉDIA', width: dataColWidth });
+        } else {
+          // Última unidade: +1 coluna para GERAL
+          header1.push({ text: units[u].name, width: dataColWidth * (activities.length + 2) });
+          for (let a = 0; a < activities.length; a++) {
+            header2.push({ text: activities[a].name, width: dataColWidth });
+          }
+          header2.push({ text: 'MÉDIA', width: dataColWidth });
+          header2.push({ text: 'GERAL', width: dataColWidth });
+        }
+      }
+      // Desenhar primeira linha
+      xPos = margin;
+      for (let i = 0; i < header1.length; i++) {
+        doc.setFillColor(200, 230, 201);
+        doc.setDrawColor(255, 255, 255);
+        doc.rect(xPos, yPos, header1[i].width, rowHeight, 'F');
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+        doc.text(header1[i].text, xPos + header1[i].width / 2, yPos + 5, { align: 'center' });
+        xPos += header1[i].width;
+      }
+      // Segunda linha do cabeçalho
+      xPos = margin;
+      yPos += rowHeight;
+      for (let i = 0; i < header2.length; i++) {
+        doc.setFillColor(200, 230, 201);
+        doc.setDrawColor(255, 255, 255);
+        doc.rect(xPos, yPos, header2[i].width, rowHeight, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        doc.text(header2[i].text, xPos + header2[i].width / 2, yPos + 5, { align: 'center' });
+        xPos += header2[i].width;
+      }
+      
+      // Linhas das disciplinas
+      subjects.forEach((subject, index) => {
+        yPos += rowHeight;
+        xPos = margin;
+        if (index % 2 === 0) {
+          doc.setFillColor(245, 245, 255);
+          doc.rect(xPos, yPos, totalWidth, rowHeight, 'F');
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 80);
+        doc.text(subject.name, xPos + 3, yPos + 5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        xPos += nameColWidth;
+        for (let u = 0; u < units.length; u++) {
+          for (let a = 0; a < activities.length; a++) {
+            const key = `${subject.id}-${units[u].id}-${activities[a].id}`;
+            const grade = grades[key] || '';
+            doc.setTextColor(50, 50, 80);
+            doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+            xPos += dataColWidth;
+          }
+          const unitAvg = getUnitAverage(subject.id, units[u].id);
+          doc.setFont('helvetica', 'bold');
+          if (parseFloat(unitAvg) >= 7) {
+            doc.setTextColor(0, 150, 0); // verde
+          } else {
+            doc.setTextColor(200, 0, 0); // vermelho
+          }
+          doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+          doc.setFont('helvetica', 'normal');
+          xPos += dataColWidth;
+          if (u === units.length - 1) {
+            // Última coluna: média final (GERAL)
+            const finalGrade = getFinalAverage(subject.id);
+            doc.setFont('helvetica', 'bold');
+            if (parseFloat(finalGrade) >= 21) {
+              doc.setTextColor(0, 150, 0); // verde
+            } else {
+              doc.setTextColor(200, 0, 0); // vermelho
+            }
+            doc.text(finalGrade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            xPos += dataColWidth;
+          }
+        }
+      });
+      
+      // Seção de gráficos (mesma página)
+      if (includeAnalytics) {
+        yPos += 15;
+        
+        // Título da seção de análise
+        doc.setFillColor(67, 160, 71); // Verde
+        doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(255, 255, 255);
+        doc.text('ANÁLISE DE DESEMPENHO', pageWidth / 2, yPos + 5, { align: 'center' });
+        
+        // Gráfico de barras
+        yPos += 15;
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 100);
+        doc.text('Desempenho por Disciplina:', margin, yPos);
+        
+        // Definir a área do gráfico
+        const graphStartY = yPos + 5;
+        const barHeight = 6;
+        const barGap = 2;
+        const maxBarValue = 30;
+        const maxBarWidth = 120; // ajuste para caber na página
+        const labelWidth = 50; // Espaço para o nome da disciplina
+        
+        // Legenda do gráfico
+        doc.setFillColor(200, 230, 201);
+        doc.rect(margin, graphStartY, totalWidth, 1, 'F'); // Linha horizontal superior
+        
+        // Escalas
+        for (let i = 0; i <= maxBarValue; i += 6) {
+          const x = margin + labelWidth + (i / maxBarValue) * maxBarWidth;
+          doc.setFillColor(230, 230, 230);
+          doc.rect(x, graphStartY, 0.5, subjects.length * (barHeight + barGap) + 5, 'F'); // Linhas verticais da escala
+          
+          doc.setFontSize(7);
+          doc.setTextColor(100, 100, 100);
+          doc.text(i.toString(), x, graphStartY - 2, { align: 'center' });
+        }
+        
+        // Barras para cada disciplina
+        subjects.forEach((subject, index) => {
+          const barY = graphStartY + 5 + index * (barHeight + barGap);
+          
+          // Nome da disciplina
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(60, 60, 100);
+          // Truncar o nome se for muito longo
+          let subjectName = subject.name;
+          if (subjectName.length > 15) {
+            subjectName = subjectName.substring(0, 12) + '...';
+          }
+          doc.text(subjectName, margin, barY + barHeight/2 + 1);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          
+          // Média final da disciplina
+          const finalAvg = getFinalAverage(subject.id);
+          const value = finalAvg === '-' ? 0 : parseFloat(finalAvg);
+          
+          // Cor da barra baseada na nota
+          if (value < 21) {
+            doc.setFillColor(229, 57, 53); // Vermelho
+          } else if (value >= 21 && value <= 28) {
+            doc.setFillColor(67, 160, 71); // Verde
+          } else {
+            doc.setFillColor(255, 215, 0); // Amarelo
+          }
+          
+          // Desenhar a barra
+          const barWidth = (value / maxBarValue) * maxBarWidth;
+          doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
+          
+          // Valor da nota no final da barra
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(10);
+          doc.setTextColor(40, 40, 40);
+          doc.text(finalAvg, margin + labelWidth + barWidth + 3, barY + barHeight/2 + 1);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+        });
+        
+        // Linha inferior do gráfico
+        doc.setFillColor(200, 230, 201);
+        doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
+        
+        // Legenda de cores
+        const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
+        
+        // Caixas de legenda
+        doc.setFillColor(229, 57, 53);
+        doc.rect(margin, legendY, 10, 5, 'F');
+        doc.setFillColor(67, 160, 71);
+        doc.rect(margin + 80, legendY, 10, 5, 'F');
+        doc.setFillColor(255, 215, 0);
+        doc.rect(margin + 160, legendY, 10, 5, 'F');
+        
+        // Texto da legenda
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(80, 80, 80);
+        doc.text('Abaixo de 21', margin + 13, legendY + 4);
+        doc.text('Entre 21 e 28', margin + 93, legendY + 4);
+        doc.text('Acima de 28', margin + 173, legendY + 4);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        
+        // Ajustar posição Y para a assinatura
+        yPos = legendY + 15;
+      }
+      
+      // Área para assinatura
+      yPos = Math.min(yPos + 10, pageHeight - 35); // Ajustar para mais espaço
+      doc.setFillColor(240, 240, 250);
+      doc.rect(margin + 20, yPos - 5, pageWidth - 2 * (margin + 20), 40, 'F');
+      const assinaturaWidth = 80; // largura da linha de assinatura
+      const assinaturaX = pageWidth / 2 - assinaturaWidth / 2;
+      // Linha para assinatura centralizada
+      doc.setDrawColor(0, 0, 0); // cor preta
+      doc.setLineWidth(0.4); // um pouco mais fina
+      doc.line(assinaturaX, yPos + 15, assinaturaX + assinaturaWidth, yPos + 15);
+      doc.setLineWidth(0.2); // volta ao padrão
+      doc.setDrawColor(60, 60, 100); // volta ao padrão
+      doc.setFontSize(11); // aumentar o texto da assinatura
+      doc.setTextColor(100, 100, 150);
+      doc.text('Assinatura do Responsável', pageWidth / 2, yPos + 20, { align: 'center' });
+      
+      // Footer maior e texto destacado
+      const footerHeight = 22;
+      doc.setFillColor(67, 160, 71); // Verde
+      doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      // Coordenação à esquerda
+      doc.setFont('helvetica', 'normal');
+      doc.text('Coordenação Pedagógica:', margin, pageHeight - 8);
+      // Nome centralizado e em negrito
+      doc.setFont('helvetica', 'bold');
+      doc.text('Marinilda da Cruz de Jesus de Carvalho', pageWidth / 2, pageHeight - 8, { align: 'center' });
+      // Data à direita
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      
+      // Salvar o PDF
+      const filename = `boletim_${student.name.replace(/\s+/g, '_')}.pdf`;
+      doc.save(filename);
+      console.log(`PDF gerado com sucesso: ${filename}`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Houve um erro ao gerar o PDF. Por favor, tente novamente.');
+    }
+  };
+  
+  /**
+   * Exporta as notas em formato HTML para Excel
+   * Ao invés de usar CSV, vamos gerar um arquivo HTML que o Excel consegue abrir perfeitamente com cores
+   */
+  const exportToExcel = () => {
+    if (!student) return;
+    
+    try {
+      // Definir cores para formatação
+      const colorSuccess = '#4CAF50';   // Verde para notas de aprovação (>=7.0)
+      const colorWarning = '#FF9800';   // Laranja para notas limítrofes (entre 5.0 e 6.9)
+      const colorDanger = '#F44336';    // Vermelho para notas de reprovação (<5.0)
+      const colorExcellent = '#1A237E';  // Azul escuro para notas excelentes (>=9.0)
+      const colorHeader = '#3F51B5';    // Azul para cabeçalhos
+      const colorSectionHeader = '#303F9F'; // Azul mais escuro para título de seções
+      const colorRowHighlight = '#F5F7FF'; // Cor para destacar linhas alternadas
+      
+      // Função para avaliar a cor baseada na nota
+      const getGradeColor = (grade: string) => {
+        if (grade === '-') return '';
+        
+        const value = parseFloat(grade);
+        if (isNaN(value)) return '';
+        
+        if (value >= 9.0) {
+          return colorExcellent;
+        } else if (value >= passingGrade) {
+          return colorSuccess;
+        } else if (value >= 5.0) {
+          return colorWarning;
+        } else {
+          return colorDanger;
+        }
+      };
+      
+      // Construir o HTML completo
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Boletim de ${student.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+            th { background-color: ${colorHeader}; color: white; font-weight: bold; }
+            .header { background-color: ${colorSectionHeader}; color: white; font-size: 18px; font-weight: bold; padding: 10px; margin-bottom: 20px; text-align: center; }
+            .section-title { background-color: ${colorSectionHeader}; color: white; font-weight: bold; padding: 5px 10px; margin: 15px 0 10px 0; }
+            .row-alt { background-color: ${colorRowHighlight}; }
+            .student-info { background-color: #f8f9fa; padding: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
+            .student-name { font-weight: bold; font-size: 16px; }
+            .total-row { background-color: #E8EAF6; font-weight: bold; }
+            .legend-item { display: inline-block; margin-right: 20px; }
+            .legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 5px; }
+            .grade-excellent { color: ${colorExcellent}; font-weight: bold; }
+            .grade-success { color: ${colorSuccess}; }
+            .grade-warning { color: ${colorWarning}; }
+            .grade-danger { color: ${colorDanger}; }
+          </style>
+        </head>
+        <body>
+          <div class="header">BOLETIM ESCOLAR</div>
+          
+          <div class="student-info">
+            <div class="student-name">${student.name}</div>
+            <div>Turma: ${student.class} | Turno: ${student.shift}</div>
+            <div>Data de emissão: ${new Date().toLocaleDateString()}</div>
+          </div>
+          
+          <div>
+            <div>Nota mínima para aprovação: ${passingGrade.toFixed(1)}</div>
+            <div style="margin-top: 10px;">
+              <div class="legend-item"><span class="legend-color" style="background-color: ${colorExcellent};"></span> Excelente (9.0 ou superior)</div>
+              <div class="legend-item"><span class="legend-color" style="background-color: ${colorSuccess};"></span> Aprovado (entre ${passingGrade.toFixed(1)} e 8.9)</div>
+              <div class="legend-item"><span class="legend-color" style="background-color: ${colorWarning};"></span> Atenção (entre 5.0 e 6.9)</div>
+              <div class="legend-item"><span class="legend-color" style="background-color: ${colorDanger};"></span> Reprovado (abaixo de 5.0)</div>
+            </div>
+          </div>
+          
+          <div class="section-title">QUADRO RESUMO DE MÉDIAS</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Disciplina</th>
+                ${units.map(unit => `<th>${unit.name}</th>`).join('')}
+                <th>Média Final</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      // Adicionar linhas das disciplinas
+      subjects.forEach((subject, idx) => {
+        html += `<tr class="${idx % 2 === 0 ? 'row-alt' : ''}">
+          <td><strong>${subject.name}</strong></td>`;
+        
+        // Médias por unidade
+        units.forEach(unit => {
+          const unitAvg = getUnitAverage(subject.id, unit.id);
+          const colorClass = unitAvg !== '-' ? `grade-${parseFloat(unitAvg) >= 9.0 ? 'excellent' : parseFloat(unitAvg) >= passingGrade ? 'success' : parseFloat(unitAvg) >= 5.0 ? 'warning' : 'danger'}` : '';
+          
+          html += `<td class="${colorClass}">${unitAvg}</td>`;
+        });
+        
+        // Média final
+        const finalAvg = getFinalAverage(subject.id);
+        const finalColorClass = finalAvg !== '-' ? `grade-${parseFloat(finalAvg) >= 9.0 ? 'excellent' : parseFloat(finalAvg) >= passingGrade ? 'success' : parseFloat(finalAvg) >= 5.0 ? 'warning' : 'danger'}` : '';
+        
+        html += `<td class="${finalColorClass}"><strong>${finalAvg}</strong></td>
+          </tr>`;
+      });
+      
+      // Para cada unidade, criar uma seção detalhada
+      units.forEach(unit => {
+        html += `<div class="section-title">DETALHAMENTO - ${unit.name}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Disciplina</th>
+                ${activities.map(activity => `<th>${activity.name}</th>`).join('')}
+                <th>Média</th>
+              </tr>
+            </thead>
+            <tbody>`;
+        
+        // Dados das disciplinas
+        subjects.forEach((subject, idx) => {
+          html += `<tr class="${idx % 2 === 0 ? 'row-alt' : ''}">
+            <td><strong>${subject.name}</strong></td>`;
+          
+          // Notas das atividades
+          activities.forEach(activity => {
+            const key = `${subject.id}-${unit.id}-${activity.id}`;
+            const gradeValue = grades[key] || '-';
+            const colorClass = gradeValue !== '-' ? `grade-${parseFloat(gradeValue) >= 9.0 ? 'excellent' : parseFloat(gradeValue) >= passingGrade ? 'success' : parseFloat(gradeValue) >= 5.0 ? 'warning' : 'danger'}` : '';
+            
+            html += `<td class="${colorClass}">${gradeValue}</td>`;
+          });
+          
+          // Média da disciplina nesta unidade
+          const unitAvg = getUnitAverage(subject.id, unit.id);
+          const avgColorClass = unitAvg !== '-' ? `grade-${parseFloat(unitAvg) >= 9.0 ? 'excellent' : parseFloat(unitAvg) >= passingGrade ? 'success' : parseFloat(unitAvg) >= 5.0 ? 'warning' : 'danger'}` : '';
+          
+          html += `<td class="${avgColorClass}"><strong>${unitAvg}</strong></td>
+            </tr>`;
+        });
+        
+        // Linha de média geral da unidade
+        html += `<tr class="total-row">
+          <td>Média Geral</td>`;
+        
+        // Espaços vazios para as atividades
+        activities.forEach(() => {
+          html += `<td></td>`;
+        });
+        
+        // Média total da unidade
+        const unitTotalAvg = getUnitTotalAverage(unit.id);
+        const totalColorClass = unitTotalAvg !== '-' ? `grade-${parseFloat(unitTotalAvg) >= 9.0 ? 'excellent' : parseFloat(unitTotalAvg) >= passingGrade ? 'success' : parseFloat(unitTotalAvg) >= 5.0 ? 'warning' : 'danger'}` : '';
+        
+        html += `<td class="${totalColorClass}"><strong>${unitTotalAvg}</strong></td>
+          </tr>
+          </tbody>
+          </table>`;
+      });
+      
+      // Fechar as tags HTML
+      html += `
+        </body>
+        </html>
+      `;
+      
+      // Criar o Blob como HTML
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+      
+      // Criar URL para download
+      const url = URL.createObjectURL(blob);
+      
+      // Criar elemento para download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `boletim_${student.name.replace(/\s+/g, '_')}.html`);
+      link.style.display = 'none';
+      
+      // Adicionar à página, clicar e remover
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Limpar o URL criado para evitar vazamento de memória
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      console.log(`Arquivo HTML para Excel gerado com sucesso para o aluno ${student.name}`);
+    } catch (error) {
+      console.error('Erro ao gerar arquivo HTML para Excel:', error);
+      alert('Ocorreu um erro ao gerar o arquivo. Por favor, tente novamente.');
+    }
+  };
+  
+  /**
+   * Calcula a média de uma disciplina em uma unidade
+   * @param {number} subjectId - ID da disciplina
+   * @param {number} unitId - ID da unidade
+   * @returns {string} Média formatada
+   */
+  const getUnitAverage = (subjectId: number, unitId: number): string => {
+    let sum = 0;
+    let hasValue = false;
+    activities.forEach(activity => {
+      const key = `${subjectId}-${unitId}-${activity.id}`;
+      if (grades[key]) {
+        sum += parseFloat(grades[key]);
+        hasValue = true;
+      }
+    });
+    return hasValue ? sum.toFixed(1) : '-';
+  };
+  
+  /**
+   * Calcula a média final de uma disciplina
+   * @param {number} subjectId - ID da disciplina
+   * @returns {string} Média formatada
+   */
+  const getFinalAverage = (subjectId: number): string => {
+    let sum = 0;
+    let hasValue = false;
+    units.forEach(unit => {
+      const avg = getUnitAverage(subjectId, unit.id);
+      if (avg !== '-') {
+        sum += parseFloat(avg);
+        hasValue = true;
+      }
+    });
+    return hasValue ? sum.toFixed(1) : '-';
+  };
+  
+  /**
+   * Calcula a média de todas as disciplinas em uma unidade
+   * @param {number} unitId - ID da unidade
+   * @returns {string} Média formatada
+   */
+  const getUnitTotalAverage = (unitId: number): string => {
+    const averages: number[] = [];
+    
+    subjects.forEach(subject => {
+      const avg = getUnitAverage(subject.id, unitId);
+      if (avg !== '-') {
+        averages.push(parseFloat(avg));
+      }
+    });
+    
+    return formatGrade(calculateAverage(averages));
+  };
+  
+  /**
+   * Calcula a média final geral
+   * @returns {string} Média formatada
+   */
+  const getTotalAverage = (): string => {
+    let sum = 0;
+    let count = 0;
+    subjects.forEach(subject => {
+      const final = getFinalAverage(subject.id);
+      if (final !== '-') {
+        sum += parseFloat(final);
+        count++;
+      }
+    });
+    return count > 0 ? (sum / count).toFixed(1) : '-';
+  };
+  
+  // Renderiza a classe CSS para uma nota, com base na nota de aprovação
+  const getGradeClass = (grade: string): string => {
+    if (grade === '-') return '';
+    
+    const value = parseFloat(grade);
+    return value >= passingGrade ? 'success-text' : 'danger-text';
+  };
+  
+  /**
+   * Prepara os dados para o gráfico de desempenho por disciplina
+   * @returns {Array} Dados formatados para o gráfico
+   */
+  const prepareChartData = () => {
+    if (!student) return [];
+    
+    // Formata os dados para o gráfico de barras
+    const chartData = subjects.map(subject => {
+      const data: Record<string, any> = {
+        name: subject.name,
+      };
+      
+      // Adiciona as médias de cada unidade
+      units.forEach(unit => {
+        const avg = getUnitAverage(subject.id, unit.id);
+        // Converte para número ou usa 0 se não houver nota
+        data[unit.name] = avg === '-' ? 0 : parseFloat(avg);
+      });
+      
+      // Adiciona a média final
+      const finalAvg = getFinalAverage(subject.id);
+      data['Média Final'] = finalAvg === '-' ? 0 : parseFloat(finalAvg);
+      
+      return data;
+    });
+    
+    return chartData;
+  };
+  
+  // Fecha modais ao clicar fora
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setShowSubjectModal(false);
+        setShowUnitModal(false);
+        setShowExportModal(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  const saveGrades = async () => {
+    if (!student) {
+      toast({ title: 'Selecione um aluno para salvar as notas.', variant: 'destructive' });
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const gradesArray = Object.entries(grades)
+        .map(([key, value]) => {
+          const [subject_id, unit_id, activity_id] = key.split('-').map(Number);
+          const numValue = parseFloat(value);
+          if (!isNaN(subject_id) && !isNaN(unit_id) && !isNaN(activity_id) && !isNaN(numValue)) {
+            return {
+              student_id: student.id,
+              subject_id,
+              unit_id,
+              activity_id,
+              value: numValue
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+      // Ajuste a URL conforme seu backend
+      const response = await fetch('/api/grades/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grades: gradesArray })
+      });
+      if (!response.ok) throw new Error('Erro ao salvar notas');
+      toast({
+        title: 'Notas salvas com sucesso! ✅',
+        variant: 'default',
+        duration: 3000
+      });
+    } catch (error) {
+      toast({ title: 'Erro ao salvar notas. Tente novamente.', variant: 'destructive' });
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Função para cor da média por unidade
+  const getUnitAverageClass = (avg: string): string => {
+    if (avg === '-') return '';
+    const value = parseFloat(avg);
+    return value >= 7 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+  };
+  // Função para cor da média final
+  const getFinalAverageClass = (avg: string): string => {
+    if (avg === '-') return '';
+    const value = parseFloat(avg);
+    return value >= 21 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
+  };
+  
+  const handleDeleteStudent = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!student) return;
+    setIsDeleting(true);
+    try {
+      await deletarAluno(student.id);
+      toast({ title: 'Aluno removido com sucesso! ✅', variant: 'default', duration: 3000 });
+      setShowDeleteModal(false);
+      navigate('/students');
+    } catch {
+      toast({ title: 'Erro ao deletar aluno.', variant: 'destructive', duration: 3000 });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+  
+  const handleEditStudent = () => {
+    if (!student) return;
+    setEditForm({ name: student.name, class: student.class, shift: student.shift });
+    setShowEditModal(true);
+  };
+
+  const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSave = async () => {
+    if (!student) return;
+    setIsEditing(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/alunos/${student.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error('Erro ao editar aluno');
+      const updated = await res.json();
+      setStudent(updated);
+      toast({ title: 'Dados do aluno atualizados com sucesso! ✅', variant: 'default', duration: 3000 });
+      setShowEditModal(false);
+    } catch {
+      toast({ title: 'Erro ao editar aluno.', variant: 'destructive', duration: 3000 });
+    } finally {
+      setIsEditing(false);
+    }
+  };
+  
+  if (!student) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-lg shadow-md border border-indigo-100 mt-8">
+        <span className="material-icons text-indigo-300 text-6xl mb-4">auto_stories</span>
+        <h2 className="text-2xl font-semibold text-indigo-700 mb-2">Educar é semear com sabedoria e colher com paciência.</h2>
+        <p className="text-indigo-500 italic mb-1">— Augusto Cury</p>
+        <p className="text-sm text-gray-500 mt-2">Coordenação Pedagógica: Marinilda da Cruz de Jesus de Carvalho</p>
+      </div>
+    );
+  }
+
+  return (
+    <section className="bg-white rounded-lg shadow-lg p-5 mb-6 border border-indigo-100 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-3">
+        <div className="flex items-center">
+          <span className="material-icons text-indigo-600 mr-2">grid_on</span>
+          <h2 className="text-xl font-bold text-gray-800">Boletim de Notas</h2>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <Button 
+            onClick={saveGrades}
+            className="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex items-center shadow-sm"
+            size="sm"
+            disabled={isSaving}
+          >
+            <span className="material-icons text-sm mr-1">save</span>
+            {isSaving ? 'Salvando...' : 'Salvar Notas'}
+          </Button>
+          {student && (
+            <Button
+              onClick={handleEditStudent}
+              className="px-3 py-1.5 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition flex items-center shadow-sm"
+              size="sm"
+              title="Editar dados do aluno"
+            >
+              <span className="material-icons text-sm mr-1">edit</span>
+              Editar dados do Aluno
+            </Button>
+          )}
+          <Button 
+            onClick={() => setShowExportModal(true)}
+            className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition flex items-center shadow-sm"
+            size="sm"
+          >
+            <span className="material-icons text-sm mr-1">download</span>
+            Exportar
+          </Button>
+          <Button 
+            onClick={clearData}
+            className="px-3 py-1.5 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition flex items-center shadow-sm"
+            size="sm"
+            variant="destructive"
+          >
+            <span className="material-icons text-sm mr-1">delete_sweep</span>
+            Limpar todas as notas
+          </Button>
+          {student && (
+            <Button
+              className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white flex items-center rounded-md shadow-sm"
+              onClick={handleDeleteStudent}
+              size="sm"
+              variant="destructive"
+              title="Excluir aluno"
+            >
+              <span className="material-icons text-sm mr-1">delete</span>
+              Excluir Aluno
+            </Button>
+          )}
+        </div>
+      </div>
+      
+      {/* Aviso de aluno selecionado */}
+      {!student && (
+        <div className="bg-amber-50 p-4 rounded-md border border-amber-200 mb-5 text-amber-700 flex items-center">
+          <span className="material-icons mr-2">info</span>
+          <span>Selecione um aluno para visualizar e editar suas notas.</span>
+        </div>
+      )}
+      
+      {/* Aluno selecionado - detalhes */}
+      {student && (
+        <div className="bg-indigo-50 rounded-md p-3 mb-5 border border-indigo-100 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="bg-indigo-600 text-white rounded-full w-10 h-10 flex items-center justify-center font-bold mr-3">
+              {student.name.charAt(0)}
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800">{student.name}</h3>
+              <p className="text-sm text-gray-600">
+                <span className="inline-flex items-center">
+                  <span className="material-icons text-xs mr-1">class</span>
+                  Turma {student.class}
+                </span>
+                <span className="mx-2">|</span>
+                <span className="inline-flex items-center">
+                  <span className="material-icons text-xs mr-1">schedule</span>
+                  {student.shift}
+                </span>
+              </p>
+            </div>
+          </div>
+          <div className="bg-white rounded-md px-3 py-1.5 shadow-sm flex items-center border border-indigo-100">
+            <span className="material-icons text-indigo-600 mr-1">trending_up</span>
+            <div>
+              <div className="text-xs text-gray-500">Média Geral</div>
+              <div className={`font-bold ${parseFloat(getTotalAverage()) >= passingGrade ? 'text-green-600' : 'text-red-600'}`}>
+                {getTotalAverage()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Tabela de notas */}
+      <div className="table-container overflow-x-auto bg-white rounded-lg border border-gray-200 shadow-sm">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-4 py-3 text-left font-medium text-gray-700">Disciplinas</th>
+              
+              {units.map(unit => (
+                <th 
+                  key={unit.id} 
+                  className="px-4 py-3 text-center font-medium text-gray-700 border-l border-gray-200" 
+                  colSpan={activities.length + 1}
+                >
+                  {unit.name}
+                </th>
+              ))}
+              
+              <th className="px-4 py-3 text-center font-medium text-gray-700 border-l border-gray-200">Média Final</th>
+            </tr>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-4 py-2 font-normal text-gray-600"></th>
+              
+              {units.map(unit => (
+                <React.Fragment key={`header-${unit.id}`}>
+                  {activities.map(activity => (
+                    <th 
+                      key={`${unit.id}-${activity.id}`} 
+                      className="px-2 py-2 text-center text-xs font-normal text-gray-600 border-l border-gray-200"
+                    >
+                      {activity.name}
+                    </th>
+                  ))}
+                  <th className="px-2 py-2 text-center text-xs font-medium text-gray-700 border-l border-gray-200">Média</th>
+                </React.Fragment>
+              ))}
+              
+              <th className="px-2 py-2 border-l border-gray-200"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {subjects.map(subject => (
+              <tr key={subject.id} className="hover:bg-gray-50 transition-colors border-b border-gray-200">
+                <td className="px-4 py-3 font-medium text-gray-700">{subject.name}</td>
+                {units.map(unit => (
+                  <React.Fragment key={`${subject.id}-${unit.id}`}>
+                    {activities.map(activity => {
+                      const key = `${subject.id}-${unit.id}-${activity.id}`;
+                      const grade = grades[key] || '';
+                      const gradeClass = grade ? (parseFloat(grade) >= passingGrade ? 'success-text' : 'danger-text') : '';
+                      
+                      return (
+                        <td key={`${subject.id}-${unit.id}-${activity.id}`} className="border-l border-gray-200 p-1">
+                          <input 
+                            type="number" 
+                            min="0" 
+                            max="10" 
+                            step="0.5" 
+                            value={grade} 
+                            onChange={(e) => updateGrade(subject.id, unit.id, activity.id, e.target.value)}
+                            className={`grade-input ${gradeClass} w-14 rounded text-center py-1 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500`}
+                          />
+                        </td>
+                      );
+                    })}
+                    
+                    <td className={`border-l border-gray-200 px-2 py-1 text-center font-bold ${getGradeClass(getUnitAverage(subject.id, unit.id))}`}>
+                      {getUnitAverage(subject.id, unit.id)}
+                    </td>
+                  </React.Fragment>
+                ))}
+                
+                <td className={`border-l border-gray-200 px-3 py-1 text-center font-bold text-lg ${getFinalAverageClass(getFinalAverage(subject.id))}`}>{getFinalAverage(subject.id)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Legenda de status */}
+      <div className="flex items-center justify-end mt-3 text-sm">
+        <div className="flex items-center mr-4">
+          <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+          <span className="text-gray-600">Aprovado (≥ 21.0)</span>
+        </div>
+        <div className="flex items-center">
+          <div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
+          <span className="text-gray-600">Recuperação (&lt; 21.0)</span>
+        </div>
+      </div>
+      
+      {/* Gráfico de desempenho do aluno */}
+      {student && (
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+          <div className="flex items-center mb-4">
+            <span className="material-icons text-indigo-600 mr-2">bar_chart</span>
+            <h3 className="text-lg font-bold text-gray-800">Gráfico de Desempenho por Disciplina</h3>
+          </div>
+          
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={prepareChartData()}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis domain={[0, 10]} />
+                <Tooltip />
+                <Legend />
+                {units.map((unit, index) => (
+                  <Bar 
+                    key={unit.id}
+                    dataKey={unit.name} 
+                    fill={getColorByIndex(index)} 
+                    name={unit.name}
+                  />
+                ))}
+                <Bar 
+                  dataKey="Média Final" 
+                  fill="#8884d8" 
+                  name="Média Final"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          
+          <div className="mt-3 text-sm text-gray-600 text-center">
+            O gráfico mostra as médias obtidas em cada unidade e a média final por disciplina.
+            <div className="font-medium mt-1">
+              Nota mínima para aprovação: <span className="text-indigo-600">7.0</span> por unidade
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal para Exportação */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <div ref={modalRef} className="bg-white rounded-lg shadow-xl p-6 max-w-3xl w-full mx-4">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-indigo-800 flex items-center">
+                <span className="material-icons text-indigo-600 mr-2">download</span>
+                Exportar Boletim
+              </h3>
+              <button 
+                onClick={() => setShowExportModal(false)} 
+                className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-1.5 transition-colors"
+              >
+                <span className="material-icons">close</span>
+              </button>
+            </div>
+            
+            <div className="space-y-5 mb-6">
+              {/* Explicação */}
+              <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-100 text-sm text-indigo-700 flex items-start">
+                <span className="material-icons text-indigo-500 mr-2 mt-0.5">info</span>
+                <span>
+                  Os arquivos exportados contêm o boletim completo do aluno, incluindo notas individuais e médias. 
+                  Os dados serão salvos automaticamente no seu dispositivo.
+                </span>
+              </div>
+            
+              {/* Formato de Exportação */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Formato de Exportação:
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className={`flex items-center p-3 rounded-lg cursor-pointer border-2 transition-colors ${
+                    exportFormat === 'pdf' 
+                      ? 'border-indigo-500 bg-indigo-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="exportFormat" 
+                      value="pdf" 
+                      checked={exportFormat === 'pdf'} 
+                      onChange={() => setExportFormat('pdf')}
+                      className="sr-only"
+                    />
+                    <div className="flex flex-col items-center justify-center w-full">
+                      <span className="material-icons text-red-600 text-2xl mb-1">picture_as_pdf</span>
+                      <span className="font-medium">PDF</span>
+                      <span className="text-xs text-gray-500 mt-1">Documento formatado</span>
+                    </div>
+                  </label>
+                  
+                  <label className={`flex items-center p-3 rounded-lg cursor-pointer border-2 transition-colors ${
+                    exportFormat === 'excel' 
+                      ? 'border-indigo-500 bg-indigo-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="exportFormat" 
+                      value="excel" 
+                      checked={exportFormat === 'excel'} 
+                      onChange={() => setExportFormat('excel')}
+                      className="sr-only"
+                    />
+                    <div className="flex flex-col items-center justify-center w-full">
+                      <span className="material-icons text-green-600 text-2xl mb-1">table_chart</span>
+                      <span className="font-medium">HTML</span>
+                      <span className="text-xs text-gray-500 mt-1">Para Excel com cores</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Opções adicionais */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <label className="text-sm font-medium text-gray-700 block mb-3">
+                  Opções adicionais:
+                </label>
+                <label className="flex items-center p-3 rounded-lg bg-white border border-gray-200 cursor-pointer hover:border-gray-300 transition-colors">
+                  <input 
+                    type="checkbox" 
+                    checked={includeAnalytics} 
+                    onChange={() => setIncludeAnalytics(!includeAnalytics)}
+                    className="rounded-sm text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                  />
+                  <div className="ml-3">
+                    <span className="text-gray-800 font-medium">Incluir gráficos de desempenho</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Adiciona análises visuais do desempenho do aluno no documento
+                    </p>
+                  </div>
+                </label>
+              </div>
+              
+              {/* Aviso de aluno não selecionado */}
+              {!student && (
+                <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 text-amber-700 text-sm flex items-start">
+                  <span className="material-icons text-amber-500 mr-2 mt-0.5">warning</span>
+                  <span>Você precisa selecionar um aluno antes de exportar o boletim.</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex justify-end space-x-3 border-t border-gray-100 pt-4">
+              <button 
+                onClick={() => setShowExportModal(false)} 
+                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={exportGrades} 
+                className={`px-5 py-2.5 text-white rounded-md transition-colors flex items-center ${
+                  student 
+                    ? 'bg-indigo-600 hover:bg-indigo-700' 
+                    : 'bg-gray-400 cursor-not-allowed'
+                }`}
+                disabled={!student}
+              >
+                <span className="material-icons text-sm mr-1">download</span>
+                Exportar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Overlay de carregamento ao salvar notas */}
+      {isSaving && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 flex flex-col items-center">
+            <span className="material-icons animate-spin text-4xl text-blue-600 mb-3">autorenew</span>
+            <span className="text-lg font-semibold text-blue-700">Salvando notas...</span>
+          </div>
+        </div>
+      )}
+      
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full flex flex-col items-center">
+            <span className="material-icons text-red-500 text-5xl mb-2">warning</span>
+            <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">Certeza que deseja remover esse aluno?</h2>
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => setShowDeleteModal(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800">Cancelar</Button>
+              <Button onClick={confirmDeleteStudent} className="bg-red-600 hover:bg-red-700 text-white" disabled={isDeleting}>
+                {isDeleting ? 'Removendo...' : 'Remover'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full flex flex-col items-center">
+            <span className="material-icons text-yellow-500 text-5xl mb-2">edit</span>
+            <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Editar Dados do Aluno</h2>
+            <div className="w-full space-y-3 mb-4">
+              <input
+                type="text"
+                name="name"
+                value={editForm.name}
+                onChange={handleEditFormChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Nome do aluno"
+                autoComplete="off"
+              />
+              <input
+                type="text"
+                name="class"
+                value={editForm.class}
+                onChange={handleEditFormChange}
+                className="w-full border rounded px-3 py-2"
+                placeholder="Turma"
+                autoComplete="off"
+              />
+              <select
+                name="shift"
+                value={editForm.shift}
+                onChange={handleEditFormChange}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+              </select>
+            </div>
+            <div className="flex gap-4 mt-4">
+              <Button onClick={() => setShowEditModal(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800">Cancelar</Button>
+              <Button onClick={handleEditSave} className="bg-yellow-500 hover:bg-yellow-600 text-white" disabled={isEditing}>
+                {isEditing ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+};
+
+export default GradesTable;
