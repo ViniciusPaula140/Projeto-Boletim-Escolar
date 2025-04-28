@@ -48,9 +48,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/alunos/:id', async (req, res) => {
     const { id } = req.params;
     const { name, class: turma, shift } = req.body;
+    const updateObj: any = { name, shift };
+    updateObj['class'] = turma;
     const { data, error } = await supabase
       .from('students')
-      .update({ name, class: turma, shift })
+      .update(updateObj)
       .eq('id', id)
       .select();
 
