@@ -541,6 +541,15 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setTextColor(100, 100, 150);
       doc.text('Assinatura do Responsável', pageWidth / 2, yPos + 20, { align: 'center' });
       
+      // Citação
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(80, 80, 80);
+      doc.text('"Educar é semear com sabedoria e colher com paciência."', pageWidth / 2, pageHeight - 40, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('— Augusto Cury', pageWidth / 2, pageHeight - 32, { align: 'center' });
+      
       // Footer maior e texto destacado
       const footerHeight = 22;
       doc.setFillColor(67, 160, 71); // Verde
