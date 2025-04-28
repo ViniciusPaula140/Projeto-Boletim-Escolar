@@ -285,7 +285,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
       
       // Box superior da tabela
-      let yPos = 50;
+      let yPos = 50; // Inicializa yPos antes de qualquer uso
       doc.setFillColor(67, 160, 71); // Verde para cabeçalho de tabela
       doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
       
@@ -1012,6 +1012,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 10;
       const headerHeight = 28;
+      // yPos precisa ser declarado ANTES de qualquer uso
+      let yPos = headerHeight + 12; // Começa após o cabeçalho e box de informações
       doc.setFillColor(229, 57, 53); // Vermelho igual ao geral
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
       const img = new Image();
@@ -1036,53 +1038,39 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text(`Turma: ${student.class}`, margin + 5, 40);
       doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
       doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
+      // Nome da unidade acima do quadro de notas
+      yPos += 18; // Espaço maior para destacar o nome da unidade
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(34, 34, 34);
+      doc.text(units.find(u => u.id === unitId)?.name || '', pageWidth / 2, yPos, { align: 'center' });
+      yPos += 10; // Espaço extra após o nome da unidade
       // Box superior da tabela
-      let yPos = 50;
       doc.setFillColor(67, 160, 71); // Verde igual ao geral
       doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
       doc.text('QUADRO DE NOTAS', pageWidth / 2, yPos + 5, { align: 'center' });
-      // Cabeçalhos da tabela
+      // Cabeçalho da tabela (apenas uma linha)
       yPos += 8;
       doc.setFillColor(200, 230, 201); // Verde claro igual ao geral
       const totalWidth = pageWidth - 2 * margin;
       const nameColWidth = totalWidth * 0.13;
       const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / (activities.length + 1);
-      // Cabeçalho duplo
       let xPos = margin;
       const rowHeight = 7;
-      // Primeira linha
-      doc.setFillColor(200, 230, 201);
-      doc.setDrawColor(255, 255, 255);
-      doc.rect(xPos, yPos, nameColWidth, rowHeight, 'F');
-      doc.setFontSize(9);
-      doc.setTextColor(0, 0, 0);
-      doc.text('Disciplina', xPos + nameColWidth / 2, yPos + 5, { align: 'center' });
-      xPos += nameColWidth;
-      doc.rect(xPos, yPos, dataColWidth * activities.length, rowHeight, 'F');
-      doc.text(units.find(u => u.id === unitId)?.name || '', xPos + (dataColWidth * activities.length) / 2, yPos + 5, { align: 'center' });
-      xPos += dataColWidth * activities.length;
-      doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
-      doc.text('MÉDIA', xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
-      // Segunda linha
-      xPos = margin + nameColWidth;
-      yPos += rowHeight;
-      activities.forEach(activity => {
+      // Cabeçalho único: Disciplina | ATV1 | ATV2 | ATV3 | ATV4 | MÉDIA
+      const headers = ['Disciplina', ...activities.map(a => a.name), 'MÉDIA'];
+      const colWidths = [nameColWidth, ...Array(activities.length).fill(dataColWidth), dataColWidth];
+      headers.forEach((header, i) => {
         doc.setFillColor(200, 230, 201);
         doc.setDrawColor(255, 255, 255);
-        doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
-        doc.setFontSize(8);
+        doc.rect(xPos, yPos, colWidths[i], rowHeight, 'F');
+        doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
-        doc.text(activity.name, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
-        xPos += dataColWidth;
+        doc.text(header, xPos + colWidths[i] / 2, yPos + 5, { align: 'center' });
+        xPos += colWidths[i];
       });
-      doc.setFillColor(200, 230, 201);
-      doc.setDrawColor(255, 255, 255);
-      doc.rect(xPos, yPos, dataColWidth, rowHeight, 'F');
-      doc.setFontSize(8);
-      doc.setTextColor(0, 0, 0);
-      doc.text('MÉDIA', xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
       // Linhas das disciplinas
       subjects.forEach((subject, index) => {
         yPos += rowHeight;
