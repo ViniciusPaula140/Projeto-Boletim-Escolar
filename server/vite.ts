@@ -41,7 +41,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 
   app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
+  app.get("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
@@ -78,8 +78,8 @@ export function serveStatic(app: Express) {
 
   app.use(express.static(distPath));
 
-  // encaminha para index.html se o arquivo não existir
-  app.use("*", (_req, res) => {
+  // Alterado para aceitar apenas GET
+  app.get("*", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
