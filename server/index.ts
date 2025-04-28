@@ -104,8 +104,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // 1. Registre as rotas de API primeiro
   const server = await registerRoutes(app);
 
+  // 2. Middleware global de erro
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -114,6 +116,7 @@ app.use((req, res, next) => {
     throw err;
   });
 
+  // 3. Só depois, sirva arquivos estáticos/catch-all
   // é importante configurar o vite apenas em ambiente de desenvolvimento e após
   // configurar todas as outras rotas para que a rota catch-all
   // não interfira com as outras rotas
