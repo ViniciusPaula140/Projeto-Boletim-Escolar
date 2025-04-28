@@ -169,9 +169,17 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
   /**
    * Limpa todos os dados da tabela
    */
-  const clearData = () => {
-    if (window.confirm('Tem certeza que deseja limpar todos os dados da tabela?')) {
+  const clearData = async () => {
+    if (window.confirm('Tem certeza que deseja limpar todas as notas? Esta ação não pode ser desfeita.')) {
       setGrades({});
+      toast({
+        title: 'Todas as notas foram limpas! ✅',
+        variant: 'default',
+        duration: 3000
+      });
+      
+      // Refresh na página após limpar as notas
+      window.location.reload();
     }
   };
   
@@ -912,18 +920,24 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
           return null;
         })
         .filter(Boolean);
-      // Ajuste a URL conforme seu backend
+      
       const response = await fetch('/api/grades/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ grades: gradesArray })
       });
+      
       if (!response.ok) throw new Error('Erro ao salvar notas');
+      
       toast({
         title: 'Notas salvas com sucesso! ✅',
         variant: 'default',
         duration: 3000
       });
+
+      // Refresh na página após salvar com sucesso
+      window.location.reload();
+      
     } catch (error) {
       toast({ title: 'Erro ao salvar notas. Tente novamente.', variant: 'destructive' });
       console.error(error);
@@ -945,22 +959,29 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
     return value >= 21 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
   };
   
-  const handleDeleteStudent = () => {
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteStudent = async () => {
+  const handleDeleteStudent = async () => {
     if (!student) return;
-    setIsDeleting(true);
-    try {
-      await deletarAluno(student.id);
-      toast({ title: 'Aluno removido com sucesso! ✅', variant: 'default', duration: 3000 });
-      setShowDeleteModal(false);
-      navigate('/students');
-    } catch {
-      toast({ title: 'Erro ao deletar aluno.', variant: 'destructive', duration: 3000 });
-    } finally {
-      setIsDeleting(false);
+    
+    if (window.confirm('Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita.')) {
+      try {
+        await deletarAluno(student.id);
+        toast({
+          title: 'Aluno excluído com sucesso! ✅',
+          variant: 'default',
+          duration: 3000
+        });
+        
+        // Refresh na página após excluir o aluno
+        window.location.reload();
+        
+      } catch (error) {
+        toast({
+          title: 'Erro ao excluir aluno. Tente novamente.',
+          variant: 'destructive',
+          duration: 3000
+        });
+        console.error(error);
+      }
     }
   };
   
@@ -983,6 +1004,10 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       setStudent({ ...student, ...editForm });
       toast({ title: 'Dados do aluno atualizados com sucesso! ✅', variant: 'default', duration: 3000 });
       setShowEditModal(false);
+      
+      // Refresh na página após editar com sucesso
+      window.location.reload();
+      
     } catch {
       toast({ title: 'Erro ao editar aluno.', variant: 'destructive', duration: 3000 });
     } finally {
@@ -1213,19 +1238,28 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       
       // Assinatura
       let yPosEnd = legendY + 15;
-      yPosEnd = Math.min(yPosEnd + 10, pageHeight - 35);
+      yPosEnd = Math.min(yPosEnd + 10, pageHeight - 65); // Ajustado para dar espaço para a citação
       doc.setFillColor(240, 240, 250);
-      doc.rect(margin + 20, yPosEnd - 5, pageWidth - 2 * (margin + 20), 40, 'F');
+      doc.rect(margin + 20, yPosEnd - 5, pageWidth - 2 * (margin + 20), 30, 'F'); // Altura reduzida de 40 para 30
       const assinaturaWidth = 80;
       const assinaturaX = pageWidth / 2 - assinaturaWidth / 2;
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.4);
-      doc.line(assinaturaX, yPosEnd + 15, assinaturaX + assinaturaWidth, yPosEnd + 15);
+      doc.line(assinaturaX, yPosEnd + 10, assinaturaX + assinaturaWidth, yPosEnd + 10); // Ajustado Y
       doc.setLineWidth(0.2);
       doc.setDrawColor(60, 60, 100);
       doc.setFontSize(11);
       doc.setTextColor(100, 100, 150);
-      doc.text('Assinatura do Responsável', pageWidth / 2, yPosEnd + 20, { align: 'center' });
+      doc.text('Assinatura do Responsável', pageWidth / 2, yPosEnd + 15, { align: 'center' }); // Ajustado Y
+
+      // Citação
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(80, 80, 80);
+      doc.text('"Educar é semear com sabedoria e colher com paciência."', pageWidth / 2, pageHeight - 40, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('— Augusto Cury', pageWidth / 2, pageHeight - 32, { align: 'center' });
       
       // Footer
       const footerHeight = 22;
@@ -1629,21 +1663,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         </div>
       )}
       
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full flex flex-col items-center">
-            <span className="material-icons text-red-500 text-5xl mb-2">warning</span>
-            <h2 className="text-lg font-bold text-gray-800 mb-2 text-center">Certeza que deseja remover esse aluno?</h2>
-            <div className="flex gap-4 mt-4">
-              <Button onClick={() => setShowDeleteModal(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800">Cancelar</Button>
-              <Button onClick={confirmDeleteStudent} className="bg-red-600 hover:bg-red-700 text-white" disabled={isDeleting}>
-                {isDeleting ? 'Removendo...' : 'Remover'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      
+      {/* Modal de edição */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full flex flex-col items-center">
@@ -1659,23 +1679,32 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
                 placeholder="Nome do aluno"
                 autoComplete="off"
               />
-              <input
-                type="text"
+              <select
                 name="class"
                 value={editForm.class}
                 onChange={handleEditFormChange}
                 className="w-full border rounded px-3 py-2"
-                placeholder="Turma"
-                autoComplete="off"
-              />
+              >
+                <option value="">Selecione a turma</option>
+                <option value="1º Ano A">1º Ano A</option>
+                <option value="1º Ano B">1º Ano B</option>
+                <option value="2º Ano A">2º Ano A</option>
+                <option value="2º Ano B">2º Ano B</option>
+                <option value="3º Ano A">3º Ano A</option>
+                <option value="3º Ano B">3º Ano B</option>
+                <option value="4º Ano A">4º Ano A</option>
+                <option value="4º Ano B">4º Ano B</option>
+                <option value="5º Ano A">5º Ano A</option>
+                <option value="5º Ano B">5º Ano B</option>
+              </select>
               <select
                 name="shift"
                 value={editForm.shift}
                 onChange={handleEditFormChange}
                 className="w-full border rounded px-3 py-2"
               >
-                <option value="Manhã">Manhã</option>
-                <option value="Tarde">Tarde</option>
+                <option value="Matutino">Matutino</option>
+                <option value="Vespertino">Vespertino</option>
               </select>
             </div>
             <div className="flex gap-4 mt-4">

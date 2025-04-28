@@ -24,7 +24,7 @@ const StudentsPage: React.FC = () => {
   const [newStudent, setNewStudent] = useState({
     name: '',
     class: '',
-    shift: 'Manhã',
+    shift: 'Matutino',
     subjects: [] as string[]
   });
   
@@ -118,26 +118,25 @@ const StudentsPage: React.FC = () => {
       return;
     }
 
-    // Não precisa validar disciplinas, pois são fixas para todos
-
     try {
       await cadastrarAluno({
         name: newStudent.name,
         class: newStudent.class,
         shift: newStudent.shift
       });
-      // Atualiza a lista de alunos após cadastrar
-      const alunosAtualizados = await fetchAlunos();
-      setStudents(alunosAtualizados);
-
+      
       // Limpa o formulário
       setNewStudent({
         name: '',
         class: '',
-        shift: 'Manhã',
+        shift: 'Matutino',
         subjects: []
       });
       setIsAddingStudent(false);
+      
+      // Refresh na página
+      window.location.reload();
+      
     } catch {
       alert('Erro ao cadastrar aluno');
     }
@@ -153,9 +152,13 @@ const StudentsPage: React.FC = () => {
     if (!studentToDelete) return;
     try {
       await deletarAluno(studentToDelete);
-      const alunosAtualizados = await fetchAlunos();
-      setStudents(alunosAtualizados);
       toast({ title: 'Aluno removido com sucesso! ✅', variant: 'default', duration: 3000 });
+      setShowDeleteModal(false);
+      setStudentToDelete(null);
+      
+      // Refresh na página
+      window.location.reload();
+      
     } catch {
       toast({ title: 'Erro ao deletar aluno.', variant: 'destructive', duration: 3000 });
     } finally {
@@ -192,10 +195,11 @@ const StudentsPage: React.FC = () => {
     if (!editingStudent) return;
     try {
       await editarAluno(editingStudent.id, editForm);
-      // Atualiza a lista de alunos
-      const alunosAtualizados = await fetchAlunos();
-      setStudents(alunosAtualizados);
       setEditingStudent(null);
+      
+      // Refresh na página
+      window.location.reload();
+      
     } catch {
       alert('Erro ao editar aluno');
     }
@@ -300,13 +304,24 @@ const StudentsPage: React.FC = () => {
                   <label htmlFor="class" className="block text-sm font-medium text-gray-700 mb-1">
                     Turma
                   </label>
-                  <Input
+                  <select
                     id="class"
-                    placeholder="Ex: 9º Ano B"
+                    className="w-full rounded-md border border-gray-300 p-2"
                     value={newStudent.class}
                     onChange={(e) => setNewStudent({...newStudent, class: e.target.value})}
-                    autoComplete="off"
-                  />
+                  >
+                    <option value="">Selecione a turma</option>
+                    <option value="1º Ano A">1º Ano A</option>
+                    <option value="1º Ano B">1º Ano B</option>
+                    <option value="2º Ano A">2º Ano A</option>
+                    <option value="2º Ano B">2º Ano B</option>
+                    <option value="3º Ano A">3º Ano A</option>
+                    <option value="3º Ano B">3º Ano B</option>
+                    <option value="4º Ano A">4º Ano A</option>
+                    <option value="4º Ano B">4º Ano B</option>
+                    <option value="5º Ano A">5º Ano A</option>
+                    <option value="5º Ano B">5º Ano B</option>
+                  </select>
                 </div>
                 
                 <div>
@@ -319,8 +334,8 @@ const StudentsPage: React.FC = () => {
                     value={newStudent.shift}
                     onChange={(e) => setNewStudent({...newStudent, shift: e.target.value})}
                   >
-                    <option value="Manhã">Manhã</option>
-                    <option value="Tarde">Tarde</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
                   </select>
                 </div>
               </div>
@@ -357,11 +372,24 @@ const StudentsPage: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Turma</label>
-                  <Input
+                  <select
+                    className="w-full rounded-md border border-gray-300 p-2"
                     value={editForm.class}
+                    name="class"
                     onChange={e => setEditForm({ ...editForm, class: e.target.value })}
-                    autoComplete="off"
-                  />
+                  >
+                    <option value="">Selecione a turma</option>
+                    <option value="1º Ano A">1º Ano A</option>
+                    <option value="1º Ano B">1º Ano B</option>
+                    <option value="2º Ano A">2º Ano A</option>
+                    <option value="2º Ano B">2º Ano B</option>
+                    <option value="3º Ano A">3º Ano A</option>
+                    <option value="3º Ano B">3º Ano B</option>
+                    <option value="4º Ano A">4º Ano A</option>
+                    <option value="4º Ano B">4º Ano B</option>
+                    <option value="5º Ano A">5º Ano A</option>
+                    <option value="5º Ano B">5º Ano B</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
@@ -370,8 +398,8 @@ const StudentsPage: React.FC = () => {
                     value={editForm.shift}
                     onChange={e => setEditForm({ ...editForm, shift: e.target.value })}
                   >
-                    <option value="Manhã">Manhã</option>
-                    <option value="Tarde">Tarde</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
                   </select>
                 </div>
               </div>
