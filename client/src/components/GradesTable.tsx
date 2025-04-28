@@ -23,7 +23,7 @@ import {
 } from 'recharts';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { fetchNotasAluno, fetchAlunos, deletarAluno } from '@/lib/api';
+import { fetchNotasAluno, fetchAlunos, deletarAluno, editarAluno } from '@/lib/api';
 import { useRoute, useLocation } from 'wouter';
 import escolinhaLogo from '../assets/escolinha-arco-iris.png';
 import checkIcon from '../assets/check.png';
@@ -976,14 +976,9 @@ const GradesTable: React.FC<GradesTableProps> = ({ passingGrade }) => {
     if (!student) return;
     setIsEditing(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/alunos/${student.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
-      });
-      if (!res.ok) throw new Error('Erro ao editar aluno');
-      const updated = await res.json();
-      setStudent(updated);
+      // Use a função editarAluno da lib/api.ts para garantir consistência
+      await editarAluno(student.id, editForm);
+      setStudent({ ...student, ...editForm });
       toast({ title: 'Dados do aluno atualizados com sucesso! ✅', variant: 'default', duration: 3000 });
       setShowEditModal(false);
     } catch {
