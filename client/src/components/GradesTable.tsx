@@ -236,30 +236,32 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
     if (!student) return;
     
     try {
-      // Verificar se jsPDF está disponível
-      if (typeof jsPDF !== 'function') {
-        throw new Error('jsPDF não está carregado corretamente');
-      }
+      if (typeof jsPDF !== 'function') throw new Error('jsPDF não está carregado corretamente');
       
-      // Criar documento básico
       const doc = new jsPDF();
-      
-      // Configurações básicas
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 10;
-      
-      // Cabeçalho vermelho
       const headerHeight = 28;
+      
+      // Configurações da logo que serão reutilizadas
+      const logoConfig = {
+        width: 35, // Aumentado para ficar mais largo
+        height: 20, // Reduzido para ficar menos esticado verticalmente
+        y: 4, // Ajustado para centralizar melhor verticalmente
+        x: margin + 2
+      };
+
+      // Cabeçalho vermelho
       doc.setFillColor(229, 57, 53);
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
-      // Logo centralizada verticalmente
+      
+      // Logo ajustada para manter proporção
       const img = new Image();
       img.src = escolinhaLogo;
-      const logoHeight = 20;
-      const logoY = (headerHeight - logoHeight) / 2;
-      doc.addImage(img, 'PNG', margin + 6, logoY, 20, logoHeight);
-      // Título estilizado
+      doc.addImage(img, 'PNG', logoConfig.x, logoConfig.y, logoConfig.width, logoConfig.height);
+      
+      // Título do boletim ajustado para não sobrepor a logo
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
       doc.setTextColor(255,255,255);
@@ -1012,19 +1014,31 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 10;
       const headerHeight = 28;
-      // yPos precisa ser declarado ANTES de qualquer uso
-      let yPos = headerHeight + 12; // Começa após o cabeçalho e box de informações
-      doc.setFillColor(229, 57, 53); // Vermelho igual ao geral
+      
+      // Configurações da logo que serão reutilizadas
+      const logoConfig = {
+        width: 35, // Aumentado para ficar mais largo
+        height: 20, // Reduzido para ficar menos esticado verticalmente
+        y: 4, // Ajustado para centralizar melhor verticalmente
+        x: margin + 2
+      };
+
+      // Cabeçalho vermelho
+      doc.setFillColor(229, 57, 53);
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
+      
+      // Logo ajustada para manter proporção
       const img = new Image();
       img.src = escolinhaLogo;
-      const logoHeight = 20;
-      const logoY = (headerHeight - logoHeight) / 2;
-      doc.addImage(img, 'PNG', margin + 6, logoY, 20, logoHeight);
+      doc.addImage(img, 'PNG', logoConfig.x, logoConfig.y, logoConfig.width, logoConfig.height);
+      
+      // Título do boletim ajustado para não sobrepor a logo
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
       doc.setTextColor(255,255,255);
       doc.text('BOLETIM ESCOLAR', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+      
+      // Box para informações do aluno
       doc.setFillColor(240, 240, 250);
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
       doc.setDrawColor(140, 140, 140);
@@ -1038,30 +1052,39 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text(`Turma: ${student.class}`, margin + 5, 40);
       doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
       doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
+
+      // Inicializar posição vertical para o conteúdo
+      let yPos = headerHeight + 12;
+
       // Nome da unidade acima do quadro de notas
       yPos += 18; // Espaço maior para destacar o nome da unidade
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(34, 34, 34);
       doc.text(units.find(u => u.id === unitId)?.name || '', pageWidth / 2, yPos, { align: 'center' });
+      
       yPos += 10; // Espaço extra após o nome da unidade
+      
       // Box superior da tabela
       doc.setFillColor(67, 160, 71); // Verde igual ao geral
       doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
       doc.text('QUADRO DE NOTAS', pageWidth / 2, yPos + 5, { align: 'center' });
+      
       // Cabeçalho da tabela (apenas uma linha)
       yPos += 8;
       doc.setFillColor(200, 230, 201); // Verde claro igual ao geral
       const totalWidth = pageWidth - 2 * margin;
       const nameColWidth = totalWidth * 0.13;
       const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / (activities.length + 1);
+      
+      // Cabeçalho único: Disciplina | ATV1 | ATV2 | ATV3 | ATV4 | MÉDIA
       let xPos = margin;
       const rowHeight = 7;
-      // Cabeçalho único: Disciplina | ATV1 | ATV2 | ATV3 | ATV4 | MÉDIA
       const headers = ['Disciplina', ...activities.map(a => a.name), 'MÉDIA'];
       const colWidths = [nameColWidth, ...Array(activities.length).fill(dataColWidth), dataColWidth];
+      
       headers.forEach((header, i) => {
         doc.setFillColor(200, 230, 201);
         doc.setDrawColor(255, 255, 255);
@@ -1071,6 +1094,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.text(header, xPos + colWidths[i] / 2, yPos + 5, { align: 'center' });
         xPos += colWidths[i];
       });
+
       // Linhas das disciplinas
       subjects.forEach((subject, index) => {
         yPos += rowHeight;
@@ -1086,12 +1110,14 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
         xPos += nameColWidth;
+        
         activities.forEach(activity => {
           const grade = grades[`${subject.id}-${unitId}-${activity.id}`] || '';
           doc.setTextColor(50, 50, 80);
           doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
           xPos += dataColWidth;
         });
+        
         // Média da unidade
         const unitAvg = getUnitAverage(subject.id, unitId);
         doc.setFont('helvetica', 'bold');
@@ -1103,6 +1129,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
         doc.setFont('helvetica', 'normal');
       });
+
       // Gráfico de desempenho por disciplina (média da unidade)
       yPos += 15;
       doc.setFillColor(67, 160, 71);
@@ -1115,6 +1142,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 100);
       doc.text('Desempenho por Disciplina:', margin, yPos);
+      
       // Gráfico de barras
       const graphStartY = yPos + 5;
       const barHeight = 6;
@@ -1122,6 +1150,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const maxBarValue = 10;
       const maxBarWidth = 120;
       const labelWidth = 50;
+      
       for (let i = 0; i <= maxBarValue; i += 2) {
         const x = margin + labelWidth + (i / maxBarValue) * maxBarWidth;
         doc.setFillColor(230, 230, 230);
@@ -1130,6 +1159,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setTextColor(100, 100, 100);
         doc.text(i.toString(), x, graphStartY - 2, { align: 'center' });
       }
+      
       subjects.forEach((subject, index) => {
         const barY = graphStartY + 5 + index * (barHeight + barGap);
         doc.setFont('helvetica', 'bold');
@@ -1140,6 +1170,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.text(subjectName, margin, barY + barHeight/2 + 1);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
+        
         // Média da unidade
         const unitAvg = getUnitAverage(subject.id, unitId);
         const value = unitAvg === '-' ? 0 : parseFloat(unitAvg);
@@ -1159,15 +1190,18 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
       });
+      
       doc.setFillColor(200, 230, 201);
       doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
       const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
+      
       doc.setFillColor(229, 57, 53);
       doc.rect(margin, legendY, 10, 5, 'F');
       doc.setFillColor(67, 160, 71);
       doc.rect(margin + 80, legendY, 10, 5, 'F');
       doc.setFillColor(255, 215, 0);
       doc.rect(margin + 160, legendY, 10, 5, 'F');
+      
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
@@ -1176,6 +1210,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text('Acima de 9', margin + 173, legendY + 4);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
+      
       // Assinatura
       let yPosEnd = legendY + 15;
       yPosEnd = Math.min(yPosEnd + 10, pageHeight - 35);
@@ -1191,6 +1226,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFontSize(11);
       doc.setTextColor(100, 100, 150);
       doc.text('Assinatura do Responsável', pageWidth / 2, yPosEnd + 20, { align: 'center' });
+      
       // Footer
       const footerHeight = 22;
       doc.setFillColor(67, 160, 71);
@@ -1203,6 +1239,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text('Marinilda da Cruz de Jesus de Carvalho', pageWidth / 2, pageHeight - 8, { align: 'center' });
       doc.setFont('helvetica', 'normal');
       doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+      
       const filename = `boletim_${student.name.replace(/\s+/g, '_')}_unidade${unitId}.pdf`;
       doc.save(filename);
       console.log(`PDF gerado com sucesso: ${filename}`);
