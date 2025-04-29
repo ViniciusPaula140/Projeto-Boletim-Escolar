@@ -255,14 +255,14 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       
       // Configurações da logo que serão reutilizadas
       const logoConfig = {
-        width: 35, // Aumentado para ficar mais largo
-        height: 20, // Reduzido para ficar menos esticado verticalmente
-        y: 4, // Ajustado para centralizar melhor verticalmente
+        width: 35,
+        height: 20,
+        y: 4,
         x: margin + 2
       };
 
-      // Cabeçalho vermelho
-      doc.setFillColor(255, 255, 255); // Alterado para branco
+      // Cabeçalho branco
+      doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
       
       // Logo ajustada para manter proporção
@@ -273,103 +273,108 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Título do boletim ajustado para não sobrepor a logo
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
-      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.setTextColor(0, 0, 0);
       doc.text('ESCOLA ARCO-ÍRIS', pageWidth / 2, headerHeight / 2 - 5, { align: 'center' });
       
       // Adicionando a frase abaixo do nome da escola
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.setTextColor(0, 0, 0);
       doc.text('"Muitos são os caminhos, mas a direção é uma só."', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
       
       // Box para informações do aluno
-      doc.setFillColor(240, 240, 250); // Fundo claro
+      doc.setFillColor(240, 240, 250);
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
-      // Borda do retângulo
-      doc.setDrawColor(140, 140, 140); // Cinza mais claro
+      doc.setDrawColor(140, 140, 140);
       doc.setLineWidth(0.7);
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'S');
-      doc.setLineWidth(0.2); // volta ao padrão
-      doc.setDrawColor(60, 60, 100); // volta ao padrão
-      
-      // Informações do aluno
+      doc.setLineWidth(0.2);
+      doc.setDrawColor(60, 60, 100);
       doc.setFontSize(12);
       doc.setTextColor(60, 60, 100);
       doc.text(`Aluno: ${student.name}`, margin + 5, 33);
       doc.text(`Turma: ${student.class}`, margin + 5, 40);
-      
       doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
       doc.text(`Data: ${new Date().toLocaleDateString()}`, pageWidth - margin - 50, 40);
+
+      // Inicializar posição vertical para o conteúdo
+      let yPos = headerHeight + 12;
+
+      // Título "BOLETIM ESCOLAR" acima do quadro de notas
+      yPos += 18;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(34, 34, 34);
+      doc.text('BOLETIM ESCOLAR', pageWidth / 2, yPos, { align: 'center' });
+      
+      yPos += 10;
+      
+      // Descrições das avaliações
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Posições iniciais - ajustado para melhor distribuição
+      const startX = margin + 5;
+      const availableWidth = pageWidth - 2 * margin - 15;
+      const spacing = availableWidth / 5;
+      const bulletRadius = 1.2;
+      
+      // Textos das avaliações
+      const assessments = [
+        { text: 'Av1 - Teste' },
+        { text: 'Av2 - Prova' },
+        { text: 'Av3 - Trabalho' },
+        { text: 'Av4 - Atividade pontuada/Multidisciplinar' }
+      ];
+      
+      // Desenhar as bolinhas e textos com espaçamento reduzido
+      assessments.forEach((assessment, index) => {
+        const x = startX + (spacing * index);
+        const textHeight = 3;
+        const bulletY = yPos + textHeight + 0.5;
+        
+        // Desenhar bolinha verde
+        doc.setFillColor(67, 160, 71);
+        doc.circle(x, bulletY, bulletRadius, 'F');
+        
+        // Desenhar texto
+        doc.setFillColor(0, 0, 0);
+        doc.text(assessment.text, x + 6, bulletY + 1);
+      });
+      
+      yPos += 8;
       
       // Box superior da tabela
-      let yPos = 50; // Inicializa yPos antes de qualquer uso
-      doc.setFillColor(67, 160, 71); // Verde para cabeçalho de tabela
+      doc.setFillColor(67, 160, 71);
       doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-      
-      // Título da tabela
       doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
       doc.text('QUADRO DE NOTAS', pageWidth / 2, yPos + 5, { align: 'center' });
       
-      // Cabeçalhos da tabela
+      // Cabeçalho da tabela
       yPos += 8;
-      doc.setFillColor(200, 230, 201); // Verde claro
-      
-      // Ajustar larguras para ocupar toda a largura útil do PDF
+      doc.setFillColor(200, 230, 201);
       const totalWidth = pageWidth - 2 * margin;
-      const nameColWidth = totalWidth * 0.25; // Increased from 0.13 to 0.25 to accommodate longer text
-      const numDataCols = (units.length - 1) * (activities.length + 1) + (activities.length + 2); // última unidade tem +1 coluna
-      const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / numDataCols;
+      const nameColWidth = totalWidth * 0.25;
+      const dataColWidth = (totalWidth - nameColWidth) / (units.length + 1);
       
-      // Cabeçalho duplo ajustado
+      // Cabeçalho único: Componente curricular | I Unidade | II Unidade | III Unidade | MÉDIA FINAL
       let xPos = margin;
       const rowHeight = 7;
-      let header1 = [];
-      let header2 = [];
-      header1.push({ text: 'Disciplina', width: nameColWidth });
-      header2.push({ text: '', width: nameColWidth });
-      for (let u = 0; u < units.length; u++) {
-        if (u < units.length - 1) {
-          header1.push({ text: units[u].name, width: dataColWidth * (activities.length + 1) });
-          for (let a = 0; a < activities.length; a++) {
-            header2.push({ text: activities[a].name, width: dataColWidth });
-          }
-          header2.push({ text: 'MÉDIA', width: dataColWidth });
-        } else {
-          // Última unidade: +1 coluna para GERAL
-          header1.push({ text: units[u].name, width: dataColWidth * (activities.length + 2) });
-          for (let a = 0; a < activities.length; a++) {
-            header2.push({ text: activities[a].name, width: dataColWidth });
-          }
-          header2.push({ text: 'MÉDIA', width: dataColWidth });
-          header2.push({ text: 'GERAL', width: dataColWidth });
-        }
-      }
-      // Desenhar primeira linha
-      xPos = margin;
-      for (let i = 0; i < header1.length; i++) {
+      const headers = ['Componente curricular', ...units.map(u => u.name), 'MÉDIA FINAL'];
+      const colWidths = [nameColWidth, ...Array(units.length + 1).fill(dataColWidth)];
+      
+      headers.forEach((header, i) => {
         doc.setFillColor(200, 230, 201);
         doc.setDrawColor(255, 255, 255);
-        doc.rect(xPos, yPos, header1[i].width, rowHeight, 'F');
+        doc.rect(xPos, yPos, colWidths[i], rowHeight, 'F');
         doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
-        doc.text(header1[i].text, xPos + header1[i].width / 2, yPos + 5, { align: 'center' });
-        xPos += header1[i].width;
-      }
-      // Segunda linha do cabeçalho
-      xPos = margin;
-      yPos += rowHeight;
-      for (let i = 0; i < header2.length; i++) {
-        doc.setFillColor(200, 230, 201);
-        doc.setDrawColor(255, 255, 255);
-        doc.rect(xPos, yPos, header2[i].width, rowHeight, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(0, 0, 0);
-        doc.text(header2[i].text, xPos + header2[i].width / 2, yPos + 5, { align: 'center' });
-        xPos += header2[i].width;
-      }
-      
-      // Linhas das disciplinas
+        doc.text(header, xPos + colWidths[i] / 2, yPos + 5, { align: 'center' });
+        xPos += colWidths[i];
+      });
+
+      // Linhas dos componentes curriculares
       subjects.forEach((subject, index) => {
         yPos += rowHeight;
         xPos = margin;
@@ -382,157 +387,112 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setTextColor(50, 50, 80);
         doc.text(subject.name, xPos + 3, yPos + 5);
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        xPos += nameColWidth;
-        for (let u = 0; u < units.length; u++) {
-          for (let a = 0; a < activities.length; a++) {
-            const key = `${subject.id}-${units[u].id}-${activities[a].id}`;
-            const grade = grades[key] || '';
-            doc.setTextColor(50, 50, 80);
-            doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
-            xPos += dataColWidth;
-          }
-          const unitAvg = getUnitAverage(subject.id, units[u].id);
-          doc.setFont('helvetica', 'bold');
-          if (parseFloat(unitAvg) < 7) {
-            doc.setTextColor(229, 57, 53); // Vermelho para notas abaixo de 7
-          } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
-            doc.setTextColor(100, 149, 237); // Azul claro para notas entre 7 e 9
-          } else {
-            doc.setTextColor(67, 160, 71); // Verde para notas >= 9
-          }
-          doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
-          doc.setFont('helvetica', 'normal');
-          xPos += dataColWidth;
-          if (u === units.length - 1) {
-            // Última coluna: média final (GERAL)
-            const finalGrade = getFinalAverage(subject.id);
-            doc.setFont('helvetica', 'bold');
-            if (parseFloat(finalGrade) >= 21) {
-              doc.setTextColor(0, 150, 0); // verde
-            } else {
-              doc.setTextColor(200, 0, 0); // vermelho
-            }
-            doc.text(finalGrade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
-            doc.setFont('helvetica', 'normal');
-            xPos += dataColWidth;
-          }
-        }
-      });
-      
-      // Seção de gráficos (mesma página)
-      if (includeAnalytics) {
-        yPos += 15;
-        
-        // Título da seção de análise
-        doc.setFillColor(67, 160, 71); // Verde
-        doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
-        
-        doc.setFont('helvetica', 'bold');
         doc.setFontSize(11);
-        doc.setTextColor(255, 255, 255);
-        doc.text('ANÁLISE DE DESEMPENHO', pageWidth / 2, yPos + 5, { align: 'center' });
+        xPos += nameColWidth;
         
-        // Gráfico de barras
-        yPos += 15;
-        doc.setFontSize(9);
-        doc.setTextColor(60, 60, 100);
-        doc.text('Desempenho por Disciplina:', margin, yPos);
-        
-        // Definir a área do gráfico
-        const graphStartY = yPos + 5;
-        const barHeight = 6;
-        const barGap = 2;
-        const maxBarValue = 30;
-        const maxBarWidth = 120; // ajuste para caber na página
-        const labelWidth = 50; // Espaço para o nome da disciplina
-        
-        // Legenda do gráfico
-        doc.setFillColor(200, 230, 201);
-        doc.rect(margin, graphStartY, totalWidth, 1, 'F'); // Linha horizontal superior
-        
-        // Escalas
-        for (let i = 0; i <= maxBarValue; i += 6) {
-          const x = margin + labelWidth + (i / maxBarValue) * maxBarWidth;
-          doc.setFillColor(230, 230, 230);
-          doc.rect(x, graphStartY, 0.5, subjects.length * (barHeight + barGap) + 5, 'F'); // Linhas verticais da escala
-          
-          doc.setFontSize(7);
-          doc.setTextColor(100, 100, 100);
-          doc.text(i.toString(), x, graphStartY - 2, { align: 'center' });
-        }
-        
-        // Barras para cada disciplina
-        subjects.forEach((subject, index) => {
-          const barY = graphStartY + 5 + index * (barHeight + barGap);
-          
-          // Nome da disciplina
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(10);
-          doc.setTextColor(60, 60, 100);
-          // Truncar o nome se for muito longo
-          let subjectName = subject.name;
-          if (subjectName.length > 15) {
-            subjectName = subjectName.substring(0, 12) + '...';
-          }
-          doc.text(subjectName, margin, barY + barHeight/2 + 1);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
-          
-          // Média final da disciplina
-          const finalAvg = getFinalAverage(subject.id);
-          const value = finalAvg === '-' ? 0 : parseFloat(finalAvg);
-          
-          // Cor da barra baseada na nota
-          if (value < 21) {
-            doc.setFillColor(229, 57, 53); // Vermelho para notas abaixo de 7
-          } else if (value >= 21 && value < 27) {
-            doc.setFillColor(100, 149, 237); // Azul claro para notas entre 7 e 9
-          } else {
-            doc.setFillColor(67, 160, 71); // Verde para notas >= 9
-          }
-          
-          // Desenhar a barra
-          const barWidth = (value / maxBarValue) * maxBarWidth;
-          doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
-          
-          // Valor da nota no final da barra
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(10);
-          doc.setTextColor(40, 40, 40);
-          doc.text(finalAvg, margin + labelWidth + barWidth + 3, barY + barHeight/2 + 1);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8);
+        // Notas por unidade
+        units.forEach(unit => {
+          const unitAvg = getUnitAverage(subject.id, unit.id);
+          doc.setTextColor(50, 50, 80);
+          doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+          xPos += dataColWidth;
         });
         
-        // Linha inferior do gráfico
-        doc.setFillColor(200, 230, 201);
-        doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
-        
-        // Legenda de cores
-        const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
-        
-        // Caixas de legenda
-        doc.setFillColor(229, 57, 53); // Vermelho
-        doc.rect(margin, legendY, 10, 5, 'F');
-        doc.setFillColor(100, 149, 237); // Azul claro
-        doc.rect(margin + 80, legendY, 10, 5, 'F');
-        doc.setFillColor(67, 160, 71); // Verde
-        doc.rect(margin + 160, legendY, 10, 5, 'F');
-        
-        // Texto da legenda
+        // Média final
+        const finalAvg = getFinalAverage(subject.id);
+        doc.setFont('helvetica', 'bold');
+        if (parseFloat(finalAvg) < 21) {
+          doc.setTextColor(229, 57, 53);
+        } else if (parseFloat(finalAvg) >= 21 && parseFloat(finalAvg) < 27) {
+          doc.setTextColor(100, 149, 237);
+        } else {
+          doc.setTextColor(67, 160, 71);
+        }
+        doc.text(finalAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+      });
+
+      // Gráfico de desempenho
+      yPos += 15;
+      doc.setFillColor(67, 160, 71);
+      doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ANÁLISE DE DESEMPENHO', pageWidth / 2, yPos + 5, { align: 'center' });
+      yPos += 15;
+      doc.setFontSize(9);
+      doc.setTextColor(60, 60, 100);
+      doc.text('Desempenho por Disciplina:', margin, yPos);
+      
+      // Gráfico de barras
+      const graphStartY = yPos + 5;
+      const barHeight = 6;
+      const barGap = 2;
+      const maxBarValue = 30;
+      const maxBarWidth = 120;
+      const labelWidth = 50;
+      
+      for (let i = 0; i <= maxBarValue; i += 6) {
+        const x = margin + labelWidth + (i / maxBarValue) * maxBarWidth;
+        doc.setFillColor(230, 230, 230);
+        doc.rect(x, graphStartY, 0.5, subjects.length * (barHeight + barGap) + 5, 'F');
+        doc.setFontSize(7);
+        doc.setTextColor(100, 100, 100);
+        doc.text(i.toString(), x, graphStartY - 2, { align: 'center' });
+      }
+      
+      subjects.forEach((subject, index) => {
+        const barY = graphStartY + 5 + index * (barHeight + barGap);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
-        doc.setTextColor(80, 80, 80);
-        doc.text('Abaixo de 21', margin + 13, legendY + 4);
-        doc.text('Entre 21 e 27', margin + 93, legendY + 4);
-        doc.text('Acima de 27', margin + 173, legendY + 4);
+        doc.setTextColor(60, 60, 100);
+        let subjectName = subject.name;
+        if (subjectName.length > 15) subjectName = subjectName.substring(0, 12) + '...';
+        doc.text(subjectName, margin, barY + barHeight/2 + 1);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         
-        // Ajustar posição Y para a assinatura
-        yPos = legendY + 15;
-      }
+        // Média final para o gráfico
+        const finalAvg = getFinalAverage(subject.id);
+        const value = finalAvg === '-' ? 0 : parseFloat(finalAvg);
+        if (value < 21) {
+          doc.setFillColor(229, 57, 53);
+        } else if (value >= 21 && value < 27) {
+          doc.setFillColor(100, 149, 237);
+        } else {
+          doc.setFillColor(67, 160, 71);
+        }
+        const barWidth = (value / maxBarValue) * maxBarWidth;
+        doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(40, 40, 40);
+        doc.text(finalAvg, margin + labelWidth + barWidth + 3, barY + barHeight/2 + 1);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+      });
+      
+      doc.setFillColor(200, 230, 201);
+      doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
+      const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
+      
+      // Legenda
+      doc.setFillColor(229, 57, 53);
+      doc.rect(margin, legendY, 10, 5, 'F');
+      doc.setFillColor(100, 149, 237);
+      doc.rect(margin + 80, legendY, 10, 5, 'F');
+      doc.setFillColor(67, 160, 71);
+      doc.rect(margin + 160, legendY, 10, 5, 'F');
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(80, 80, 80);
+      doc.text('Abaixo de 21', margin + 13, legendY + 4);
+      doc.text('Entre 21 e 27', margin + 93, legendY + 4);
+      doc.text('Acima de 27', margin + 173, legendY + 4);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
       
       // Citação
       doc.setFont('helvetica', 'italic');
@@ -543,23 +503,19 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFontSize(10);
       doc.text('— Augusto Cury', pageWidth / 2, pageHeight - 32, { align: 'center' });
       
-      // Footer maior e texto destacado
+      // Footer
       const footerHeight = 22;
-      doc.setFillColor(67, 160, 71); // Verde
+      doc.setFillColor(67, 160, 71);
       doc.rect(0, pageHeight - footerHeight, pageWidth, footerHeight, 'F');
       doc.setFontSize(11);
       doc.setTextColor(255, 255, 255);
-      // Coordenação à esquerda
       doc.setFont('helvetica', 'normal');
       doc.text('Coordenação Pedagógica:', margin, pageHeight - 8);
-      // Nome centralizado e em negrito
       doc.setFont('helvetica', 'bold');
       doc.text('Marinilda da Cruz de Jesus de Carvalho', pageWidth / 2, pageHeight - 8, { align: 'center' });
-      // Data à direita
       doc.setFont('helvetica', 'normal');
       doc.text(`Emitido em: ${new Date().toLocaleDateString()}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
       
-      // Salvar o PDF
       const filename = `boletim_${student.name.replace(/\s+/g, '_')}.pdf`;
       doc.save(filename);
       console.log(`PDF gerado com sucesso: ${filename}`);
