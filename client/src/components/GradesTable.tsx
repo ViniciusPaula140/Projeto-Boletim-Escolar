@@ -356,32 +356,71 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFillColor(200, 230, 201);
       const totalWidth = pageWidth - 2 * margin;
       const nameColWidth = totalWidth * 0.25;
-      const dataColWidth = (totalWidth - nameColWidth) / (units.length + 1);
+      const numDataCols = (units.length * (activities.length + 1)) + 1; // +1 para cada média de unidade e +1 para média final
+      const dataColWidth = (totalWidth - nameColWidth) / numDataCols;
       
-      // Cabeçalho único: Componente curricular | I Unidade | II Unidade | III Unidade | MÉDIA FINAL
+      // Cabeçalho duplo
       let xPos = margin;
       const rowHeight = 7;
-      const headers = ['Componente curricular', ...units.map(u => u.name), 'MÉDIA FINAL'];
-      const colWidths = [nameColWidth, ...Array(units.length + 1).fill(dataColWidth)];
       
-      headers.forEach((header, i) => {
+      // Primeira linha do cabeçalho
+      let header1 = [];
+      let header2 = [];
+      
+      // Coluna de disciplina
+      header1.push({ text: 'Componente curricular', width: nameColWidth });
+      header2.push({ text: '', width: nameColWidth });
+      
+      // Colunas para cada unidade
+      units.forEach(unit => {
+        header1.push({ text: unit.name, width: dataColWidth * (activities.length + 1) });
+        activities.forEach(activity => {
+          header2.push({ text: activity.name, width: dataColWidth });
+        });
+        header2.push({ text: 'MÉDIA', width: dataColWidth });
+      });
+      
+      // Coluna de média final
+      header1.push({ text: 'MÉDIA', width: dataColWidth });
+      header2.push({ text: 'FINAL', width: dataColWidth });
+      
+      // Desenhar primeira linha do cabeçalho
+      xPos = margin;
+      for (let i = 0; i < header1.length; i++) {
         doc.setFillColor(200, 230, 201);
         doc.setDrawColor(255, 255, 255);
-        doc.rect(xPos, yPos, colWidths[i], rowHeight, 'F');
+        doc.rect(xPos, yPos, header1[i].width, rowHeight, 'F');
         doc.setFontSize(9);
         doc.setTextColor(0, 0, 0);
-        doc.text(header, xPos + colWidths[i] / 2, yPos + 5, { align: 'center' });
-        xPos += colWidths[i];
-      });
-
+        doc.text(header1[i].text, xPos + header1[i].width / 2, yPos + 5, { align: 'center' });
+        xPos += header1[i].width;
+      }
+      
+      // Segunda linha do cabeçalho
+      yPos += rowHeight;
+      xPos = margin;
+      for (let i = 0; i < header2.length; i++) {
+        doc.setFillColor(200, 230, 201);
+        doc.setDrawColor(255, 255, 255);
+        doc.rect(xPos, yPos, header2[i].width, rowHeight, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(0, 0, 0);
+        doc.text(header2[i].text, xPos + header2[i].width / 2, yPos + 5, { align: 'center' });
+        xPos += header2[i].width;
+      }
+      
       // Linhas dos componentes curriculares
       subjects.forEach((subject, index) => {
         yPos += rowHeight;
         xPos = margin;
+        
+        // Fundo zebrado
         if (index % 2 === 0) {
           doc.setFillColor(245, 245, 255);
           doc.rect(xPos, yPos, totalWidth, rowHeight, 'F');
         }
+        
+        // Nome da disciplina
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
         doc.setTextColor(50, 50, 80);
@@ -390,11 +429,29 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setFontSize(11);
         xPos += nameColWidth;
         
-        // Notas por unidade
+        // Notas de cada unidade
         units.forEach(unit => {
+          // Notas individuais
+          activities.forEach(activity => {
+            const key = `${subject.id}-${unit.id}-${activity.id}`;
+            const grade = grades[key] || '';
+            doc.setTextColor(50, 50, 80);
+            doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+            xPos += dataColWidth;
+          });
+          
+          // Média da unidade
           const unitAvg = getUnitAverage(subject.id, unit.id);
-          doc.setTextColor(50, 50, 80);
+          doc.setFont('helvetica', 'bold');
+          if (parseFloat(unitAvg) < 7) {
+            doc.setTextColor(229, 57, 53);
+          } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
+            doc.setTextColor(100, 149, 237);
+          } else {
+            doc.setTextColor(67, 160, 71);
+          }
           doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+          doc.setFont('helvetica', 'normal');
           xPos += dataColWidth;
         });
         
