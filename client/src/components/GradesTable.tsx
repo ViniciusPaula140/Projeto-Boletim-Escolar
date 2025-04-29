@@ -486,7 +486,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       yPos += 15;
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 100);
-      doc.text('Desempenho por Disciplina:', margin, yPos);
+      doc.text('Desempenho por Componente curricular:', margin, yPos);
       
       // Gráfico de barras
       const graphStartY = yPos + 5;
@@ -1232,7 +1232,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       yPos += 15;
       doc.setFontSize(9);
       doc.setTextColor(60, 60, 100);
-      doc.text('Desempenho por Disciplina:', margin, yPos);
+      doc.text('Desempenho por Componente curricular:', margin, yPos);
       
       // Gráfico de barras
       const graphStartY = yPos + 5;
@@ -1538,7 +1538,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
           <div className="flex items-center mb-4">
             <span className="material-icons text-indigo-600 mr-2">bar_chart</span>
-            <h3 className="text-lg font-bold text-gray-800">Gráfico de Desempenho por Disciplina</h3>
+            <h3 className="text-lg font-bold text-gray-800">Gráfico de Desempenho por Componente curricular</h3>
           </div>
           
           <div className="h-80">
