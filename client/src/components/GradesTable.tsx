@@ -261,7 +261,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       };
 
       // Cabeçalho vermelho
-      doc.setFillColor(229, 57, 53);
+      doc.setFillColor(255, 255, 255); // Alterado para branco
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
       
       // Logo ajustada para manter proporção
@@ -272,8 +272,14 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Título do boletim ajustado para não sobrepor a logo
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
-      doc.setTextColor(255,255,255);
-      doc.text('BOLETIM ESCOLAR', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.text('ESCOLA ARCO-ÍRIS', pageWidth / 2, headerHeight / 2 - 5, { align: 'center' });
+      
+      // Adicionando a frase abaixo do nome da escola
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.text('"Muitos são os caminhos, mas a direção é uma só."', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
       
       // Box para informações do aluno
       doc.setFillColor(240, 240, 250); // Fundo claro
@@ -1060,7 +1066,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       };
 
       // Cabeçalho vermelho
-      doc.setFillColor(229, 57, 53);
+      doc.setFillColor(255, 255, 255); // Alterado para branco
       doc.rect(0, 0, pageWidth, headerHeight, 'F');
       
       // Logo ajustada para manter proporção
@@ -1071,11 +1077,17 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Título do boletim ajustado para não sobrepor a logo
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(22);
-      doc.setTextColor(255,255,255);
-      doc.text('BOLETIM ESCOLAR', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
+      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.text('ESCOLA ARCO-ÍRIS', pageWidth / 2, headerHeight / 2 - 5, { align: 'center' });
+      
+      // Adicionando a frase abaixo do nome da escola
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.text('"Muitos são os caminhos, mas a direção é uma só."', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
       
       // Box para informações do aluno
-      doc.setFillColor(240, 240, 250);
+      doc.setFillColor(240, 240, 250); // Fundo claro
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
       doc.setDrawColor(140, 140, 140);
       doc.setLineWidth(0.7);
