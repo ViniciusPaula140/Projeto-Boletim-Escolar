@@ -1098,6 +1098,41 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       
       yPos += 10; // Espaço extra após o nome da unidade
       
+      // Descrições das avaliações
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      
+      // Posições iniciais - ajustado para melhor distribuição
+      const startX = margin + 5;
+      const availableWidth = pageWidth - 2 * margin - 15;
+      const spacing = availableWidth / 5;
+      const bulletRadius = 1.2;
+      
+      // Textos das avaliações
+      const assessments = [
+        { text: 'Av1 - Teste' },
+        { text: 'Av2 - Prova' },
+        { text: 'Av3 - Trabalho' },
+        { text: 'Av4 - Atividade pontuada/Multidisciplinar' }
+      ];
+      
+      // Desenhar as bolinhas e textos com espaçamento reduzido
+      assessments.forEach((assessment, index) => {
+        const x = startX + (spacing * index);
+        const textHeight = 3; // Altura aproximada do texto
+        const bulletY = yPos + textHeight + 0.5; // Ajustado para alinhar com o centro do texto
+        
+        // Desenhar bolinha verde
+        doc.setFillColor(67, 160, 71);
+        doc.circle(x, bulletY, bulletRadius, 'F');
+        
+        // Desenhar texto
+        doc.setFillColor(0, 0, 0);
+        doc.text(assessment.text, x + 6, bulletY + 1); // Ajustado Y para alinhar com a bolinha
+      });
+      
+      yPos += 8; // Espaço menor após as descrições
+      
       // Box superior da tabela
       doc.setFillColor(67, 160, 71); // Verde igual ao geral
       doc.rect(margin, yPos, pageWidth - 2 * margin, 8, 'F');
@@ -1249,6 +1284,15 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Assinatura
       let yPosEnd = legendY + 15;
       yPosEnd = Math.min(yPosEnd + 10, pageHeight - 65); // Ajustado para dar espaço para a citação
+
+      // Citação
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(12);
+      doc.setTextColor(80, 80, 80);
+      doc.text('"Educar é semear com sabedoria e colher com paciência."', pageWidth / 2, pageHeight - 40, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('— Augusto Cury', pageWidth / 2, pageHeight - 32, { align: 'center' });
 
       // Footer
       const footerHeight = 22;
