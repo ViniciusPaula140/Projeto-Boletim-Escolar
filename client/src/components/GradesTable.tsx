@@ -1182,6 +1182,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         activities.forEach(activity => {
           const grade = grades[`${subject.id}-${unitId}-${activity.id}`] || '';
           doc.setTextColor(50, 50, 80);
+          doc.setFontSize(11); // Aumentado de 10 para 11
           doc.text(grade, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
           xPos += dataColWidth;
         });
@@ -1189,6 +1190,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         // Média da unidade
         const unitAvg = getUnitAverage(subject.id, unitId);
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11); // Aumentado de 10 para 11
         if (parseFloat(unitAvg) < 7) {
           doc.setTextColor(229, 57, 53); // Vermelho para notas abaixo de 7
         } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
