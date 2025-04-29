@@ -387,10 +387,12 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
           }
           const unitAvg = getUnitAverage(subject.id, units[u].id);
           doc.setFont('helvetica', 'bold');
-          if (parseFloat(unitAvg) >= 7) {
-            doc.setTextColor(0, 150, 0); // verde
+          if (parseFloat(unitAvg) < 7) {
+            doc.setTextColor(229, 57, 53); // Vermelho para notas abaixo de 7
+          } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
+            doc.setTextColor(100, 149, 237); // Azul claro para notas entre 7 e 9
           } else {
-            doc.setTextColor(200, 0, 0); // vermelho
+            doc.setTextColor(67, 160, 71); // Verde para notas >= 9
           }
           doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
           doc.setFont('helvetica', 'normal');
@@ -476,11 +478,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
           
           // Cor da barra baseada na nota
           if (value < 21) {
-            doc.setFillColor(229, 57, 53); // Vermelho
-          } else if (value >= 21 && value <= 28) {
-            doc.setFillColor(67, 160, 71); // Verde
+            doc.setFillColor(229, 57, 53); // Vermelho para notas abaixo de 7
+          } else if (value >= 21 && value < 27) {
+            doc.setFillColor(100, 149, 237); // Azul claro para notas entre 7 e 9
           } else {
-            doc.setFillColor(255, 215, 0); // Amarelo
+            doc.setFillColor(67, 160, 71); // Verde para notas >= 9
           }
           
           // Desenhar a barra
@@ -504,11 +506,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
         
         // Caixas de legenda
-        doc.setFillColor(229, 57, 53);
+        doc.setFillColor(229, 57, 53); // Vermelho
         doc.rect(margin, legendY, 10, 5, 'F');
-        doc.setFillColor(67, 160, 71);
+        doc.setFillColor(100, 149, 237); // Azul claro
         doc.rect(margin + 80, legendY, 10, 5, 'F');
-        doc.setFillColor(255, 215, 0);
+        doc.setFillColor(67, 160, 71); // Verde
         doc.rect(margin + 160, legendY, 10, 5, 'F');
         
         // Texto da legenda
@@ -516,8 +518,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         doc.setFontSize(10);
         doc.setTextColor(80, 80, 80);
         doc.text('Abaixo de 21', margin + 13, legendY + 4);
-        doc.text('Entre 21 e 28', margin + 93, legendY + 4);
-        doc.text('Acima de 28', margin + 173, legendY + 4);
+        doc.text('Entre 21 e 27', margin + 93, legendY + 4);
+        doc.text('Acima de 27', margin + 173, legendY + 4);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
         
@@ -1155,10 +1157,12 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         // Média da unidade
         const unitAvg = getUnitAverage(subject.id, unitId);
         doc.setFont('helvetica', 'bold');
-        if (parseFloat(unitAvg) >= 7) {
-          doc.setTextColor(0, 150, 0);
+        if (parseFloat(unitAvg) < 7) {
+          doc.setTextColor(229, 57, 53); // Vermelho para notas abaixo de 7
+        } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
+          doc.setTextColor(100, 149, 237); // Azul claro para notas entre 7 e 9
         } else {
-          doc.setTextColor(200, 0, 0);
+          doc.setTextColor(67, 160, 71); // Verde para notas >= 9
         }
         doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
         doc.setFont('helvetica', 'normal');
@@ -1209,11 +1213,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         const unitAvg = getUnitAverage(subject.id, unitId);
         const value = unitAvg === '-' ? 0 : parseFloat(unitAvg);
         if (value < 7) {
-          doc.setFillColor(229, 57, 53);
+          doc.setFillColor(229, 57, 53); // Vermelho para notas abaixo de 7
         } else if (value >= 7 && value < 9) {
-          doc.setFillColor(67, 160, 71);
+          doc.setFillColor(100, 149, 237); // Azul claro para notas entre 7 e 9
         } else {
-          doc.setFillColor(255, 215, 0);
+          doc.setFillColor(67, 160, 71); // Verde para notas >= 9
         }
         const barWidth = (value / maxBarValue) * maxBarWidth;
         doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
@@ -1229,11 +1233,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
       const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
       
-      doc.setFillColor(229, 57, 53);
+      doc.setFillColor(229, 57, 53); // Vermelho
       doc.rect(margin, legendY, 10, 5, 'F');
-      doc.setFillColor(67, 160, 71);
+      doc.setFillColor(100, 149, 237); // Azul claro
       doc.rect(margin + 80, legendY, 10, 5, 'F');
-      doc.setFillColor(255, 215, 0);
+      doc.setFillColor(67, 160, 71); // Verde
       doc.rect(margin + 160, legendY, 10, 5, 'F');
       
       doc.setFont('helvetica', 'bold');
