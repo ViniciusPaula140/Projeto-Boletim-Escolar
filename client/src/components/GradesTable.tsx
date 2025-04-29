@@ -356,8 +356,13 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFillColor(200, 230, 201);
       const totalWidth = pageWidth - 2 * margin;
       const nameColWidth = totalWidth * 0.25;
-      const numDataCols = (units.length * (activities.length + 1)) + 1; // +1 para cada média de unidade e +1 para média final
-      const dataColWidth = (totalWidth - nameColWidth) / numDataCols;
+      const numDataCols = (units.length * (activities.length + 1)) + 1;
+      
+      // Cálculo das larguras das colunas
+      // Reservamos um espaço extra (0.5) para a coluna final ser mais larga
+      const totalDataWidth = totalWidth - nameColWidth;
+      const dataColWidth = totalDataWidth / (numDataCols + 0.5);
+      const finalColumnWidth = dataColWidth * 1.5;
       
       // Cabeçalho duplo
       let xPos = margin;
@@ -381,8 +386,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       });
       
       // Coluna de média final
-      header1.push({ text: 'MÉDIA', width: dataColWidth });
-      header2.push({ text: 'FINAL', width: dataColWidth });
+      header1.push({ text: 'FINAL', width: finalColumnWidth });
+      header2.push({ text: '-', width: finalColumnWidth });
       
       // Desenhar primeira linha do cabeçalho
       xPos = margin;
@@ -465,7 +470,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         } else {
           doc.setTextColor(67, 160, 71);
         }
-        doc.text(finalAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
+        // Centralizar a nota final usando a largura da coluna final
+        doc.text(finalAvg, xPos + finalColumnWidth / 2, yPos + 5, { align: 'center' });
         doc.setFont('helvetica', 'normal');
       });
 
