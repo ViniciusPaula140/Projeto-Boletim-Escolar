@@ -39,7 +39,8 @@ const DEFAULT_SUBJECTS: Subject[] = [
   { id: 2, name: 'Matemática' },
   { id: 3, name: 'História' },
   { id: 4, name: 'Geografia' },
-  { id: 5, name: 'Ciências' }
+  { id: 5, name: 'Ciências' },
+  { id: 6, name: 'Inglês' }
 ];
 
 const DEFAULT_UNITS: Unit[] = [
@@ -988,8 +989,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
           duration: 3000
         });
         
-        // Refresh na página após excluir o aluno
-        window.location.reload();
+        // Redireciona para a página de alunos após excluir o aluno
+        navigate('/students');
         
       } catch (error) {
         toast({
@@ -1419,7 +1420,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-left font-medium text-gray-700">Disciplinas</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-700">Componente curricular</th>
               
               {units.map(unit => (
                 <th 
