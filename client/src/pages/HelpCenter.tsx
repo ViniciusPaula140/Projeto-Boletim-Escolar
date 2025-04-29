@@ -192,7 +192,7 @@ const helpArticles: HelpArticle[] = [
         <li>No menu principal, acesse "Relatórios" > "Desempenho por turma"</li>
         <li>Selecione a turma desejada</li>
         <li>Escolha o período (bimestre, trimestre ou ano letivo)</li>
-        <li>Selecione as disciplinas a serem incluídas</li>
+        <li>Selecione os componentes curriculares a serem incluídos</li>
         <li>Clique em "Gerar relatório"</li>
         <li>Visualize o relatório na tela ou faça o download em PDF/Excel</li>
       </ol>

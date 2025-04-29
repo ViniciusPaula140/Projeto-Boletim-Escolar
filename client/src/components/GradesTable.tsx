@@ -317,7 +317,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       
       // Ajustar larguras para ocupar toda a largura útil do PDF
       const totalWidth = pageWidth - 2 * margin;
-      const nameColWidth = totalWidth * 0.13; // 13% para o nome da disciplina
+      const nameColWidth = totalWidth * 0.25; // Increased from 0.13 to 0.25 to accommodate longer text
       const numDataCols = (units.length - 1) * (activities.length + 1) + (activities.length + 2); // última unidade tem +1 coluna
       const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / numDataCols;
       
@@ -533,22 +533,6 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         // Ajustar posição Y para a assinatura
         yPos = legendY + 15;
       }
-      
-      // Área para assinatura
-      yPos = Math.min(yPos + 10, pageHeight - 35); // Ajustar para mais espaço
-      doc.setFillColor(240, 240, 250);
-      doc.rect(margin + 20, yPos - 5, pageWidth - 2 * (margin + 20), 40, 'F');
-      const assinaturaWidth = 80; // largura da linha de assinatura
-      const assinaturaX = pageWidth / 2 - assinaturaWidth / 2;
-      // Linha para assinatura centralizada
-      doc.setDrawColor(0, 0, 0); // cor preta
-      doc.setLineWidth(0.4); // um pouco mais fina
-      doc.line(assinaturaX, yPos + 15, assinaturaX + assinaturaWidth, yPos + 15);
-      doc.setLineWidth(0.2); // volta ao padrão
-      doc.setDrawColor(60, 60, 100); // volta ao padrão
-      doc.setFontSize(11); // aumentar o texto da assinatura
-      doc.setTextColor(100, 100, 150);
-      doc.text('Assinatura do Responsável', pageWidth / 2, yPos + 20, { align: 'center' });
       
       // Citação
       doc.setFont('helvetica', 'italic');
@@ -1125,13 +1109,13 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       yPos += 8;
       doc.setFillColor(200, 230, 201); // Verde claro igual ao geral
       const totalWidth = pageWidth - 2 * margin;
-      const nameColWidth = totalWidth * 0.13;
+      const nameColWidth = totalWidth * 0.25; // Increased from 0.13 to 0.25 to accommodate longer text
       const dataColWidth = (pageWidth - 2 * margin - nameColWidth) / (activities.length + 1);
       
-      // Cabeçalho único: Disciplina | AV1 | AV2 | AV3 | AV4 | MÉDIA
+      // Cabeçalho único: Componente curricular | AV1 | AV2 | AV3 | AV4 | MÉDIA
       let xPos = margin;
       const rowHeight = 7;
-      const headers = ['Disciplina', ...activities.map(a => a.name.replace('ATV', 'AV')), 'MÉDIA'];
+      const headers = ['Componente curricular', ...activities.map(a => a.name.replace('ATV', 'AV')), 'MÉDIA'];
       const colWidths = [nameColWidth, ...Array(activities.length).fill(dataColWidth), dataColWidth];
       
       headers.forEach((header, i) => {
@@ -1144,7 +1128,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         xPos += colWidths[i];
       });
 
-      // Linhas das disciplinas
+      // Linhas dos componentes curriculares
       subjects.forEach((subject, index) => {
         yPos += rowHeight;
         xPos = margin;
@@ -1265,28 +1249,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Assinatura
       let yPosEnd = legendY + 15;
       yPosEnd = Math.min(yPosEnd + 10, pageHeight - 65); // Ajustado para dar espaço para a citação
-      doc.setFillColor(240, 240, 250);
-      doc.rect(margin + 20, yPosEnd - 5, pageWidth - 2 * (margin + 20), 30, 'F'); // Altura reduzida de 40 para 30
-      const assinaturaWidth = 80;
-      const assinaturaX = pageWidth / 2 - assinaturaWidth / 2;
-      doc.setDrawColor(0, 0, 0);
-      doc.setLineWidth(0.4);
-      doc.line(assinaturaX, yPosEnd + 10, assinaturaX + assinaturaWidth, yPosEnd + 10); // Ajustado Y
-      doc.setLineWidth(0.2);
-      doc.setDrawColor(60, 60, 100);
-      doc.setFontSize(11);
-      doc.setTextColor(100, 100, 150);
-      doc.text('Assinatura do Responsável', pageWidth / 2, yPosEnd + 15, { align: 'center' }); // Ajustado Y
 
-      // Citação
-      doc.setFont('helvetica', 'italic');
-      doc.setFontSize(12);
-      doc.setTextColor(80, 80, 80);
-      doc.text('"Educar é semear com sabedoria e colher com paciência."', pageWidth / 2, pageHeight - 40, { align: 'center' });
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text('— Augusto Cury', pageWidth / 2, pageHeight - 32, { align: 'center' });
-      
       // Footer
       const footerHeight = 22;
       doc.setFillColor(67, 160, 71);

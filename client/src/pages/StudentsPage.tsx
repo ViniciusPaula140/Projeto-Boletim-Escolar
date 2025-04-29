@@ -28,7 +28,7 @@ const StudentsPage: React.FC = () => {
     subjects: [] as string[]
   });
   
-  // Lista de disciplinas disponíveis
+  // Lista de componentes curriculares disponíveis
   const availableSubjects = [
     'Matemática', 'Português', 'História', 'Geografia', 
     'Ciências', 'Inglês', 'Educação Física', 'Artes'
