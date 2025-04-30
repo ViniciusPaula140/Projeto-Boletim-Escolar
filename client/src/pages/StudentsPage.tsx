@@ -359,24 +359,25 @@ const StudentsPage: React.FC = () => {
           )}
           
           {editingStudent && (
-            <div className="bg-yellow-50 rounded-lg p-4 mb-6 border border-yellow-200">
-              <h2 className="text-lg font-semibold text-yellow-800 mb-4">Editar Aluno</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Aluno</label>
-                  <Input
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white rounded-lg shadow-lg p-8 max-w-sm w-full flex flex-col items-center">
+                <span className="material-icons text-yellow-500 text-5xl mb-2">edit</span>
+                <h2 className="text-lg font-bold text-gray-800 mb-4 text-center">Editar Dados do Aluno</h2>
+                <div className="w-full space-y-3 mb-4">
+                  <input
+                    type="text"
+                    name="name"
                     value={editForm.name}
                     onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
+                    placeholder="Nome do aluno"
                     autoComplete="off"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Turma</label>
                   <select
-                    className="w-full rounded-md border border-gray-300 p-2"
-                    value={editForm.class}
                     name="class"
+                    value={editForm.class}
                     onChange={e => setEditForm({ ...editForm, class: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
                   >
                     <option value="">Selecione a turma</option>
                     <option value="1º Ano A">1º Ano A</option>
@@ -390,27 +391,20 @@ const StudentsPage: React.FC = () => {
                     <option value="5º Ano A">5º Ano A</option>
                     <option value="5º Ano B">5º Ano B</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Turno</label>
                   <select
-                    className="w-full rounded-md border border-gray-300 p-2"
+                    name="shift"
                     value={editForm.shift}
                     onChange={e => setEditForm({ ...editForm, shift: e.target.value })}
+                    className="w-full border rounded px-3 py-2"
                   >
                     <option value="Matutino">Matutino</option>
                     <option value="Vespertino">Vespertino</option>
                   </select>
                 </div>
-              </div>
-              <div className="flex justify-end">
-                <Button className="bg-gray-200 hover:bg-gray-300 text-gray-800 mr-2" onClick={handleEditCancel}>
-                  Cancelar
-                </Button>
-                <Button className="bg-yellow-600 hover:bg-yellow-700" onClick={handleEditSave}>
-                  <span className="material-icons mr-1">save</span>
-                  Salvar Alterações
-                </Button>
+                <div className="flex gap-4 mt-4">
+                  <Button onClick={handleEditCancel} className="bg-gray-200 hover:bg-gray-300 text-gray-800">Cancelar</Button>
+                  <Button onClick={handleEditSave} className="bg-yellow-500 hover:bg-yellow-600 text-white">Salvar</Button>
+                </div>
               </div>
             </div>
           )}
@@ -472,7 +466,10 @@ const StudentsPage: React.FC = () => {
                                 variant="outline"
                                 className="h-8 px-2 text-blue-600 border-blue-200 hover:border-blue-300 hover:bg-blue-50"
                                 title="Ver notas do aluno"
-                                onClick={() => navigate(`/students/${student.id}`)}
+                                onClick={() => {
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  navigate(`/students/${student.id}`);
+                                }}
                               >
                                 <span className="material-icons text-sm mr-1">grade</span>
                                 Ver Notas
