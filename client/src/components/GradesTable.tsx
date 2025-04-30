@@ -542,19 +542,19 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
       
       // Legenda
-      doc.setFillColor(128, 128, 128); // Cinza médio para notas abaixo de 21
+      doc.setFillColor(128, 128, 128);
       doc.rect(margin, legendY, 10, 5, 'F');
       doc.setFillColor(100, 149, 237);
       doc.rect(margin + 80, legendY, 10, 5, 'F');
       doc.setFillColor(67, 160, 71);
-      doc.rect(margin + 160, legendY, 10, 5, 'F');
+      doc.rect(margin + 150, legendY, 10, 5, 'F'); // Reduzido de 160 para 150
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       doc.text('Abaixo de 21', margin + 13, legendY + 4);
       doc.text('Entre 21 e 26,9', margin + 93, legendY + 4);
-      doc.text('Acima de 26,9', margin + 173, legendY + 4);
+      doc.text('Acima de 26,9', margin + 163, legendY + 4); // Reduzido de 173 para 163
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       
@@ -1292,14 +1292,14 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFillColor(100, 149, 237);
       doc.rect(margin + 80, legendY, 10, 5, 'F');
       doc.setFillColor(67, 160, 71);
-      doc.rect(margin + 160, legendY, 10, 5, 'F');
+      doc.rect(margin + 150, legendY, 10, 5, 'F'); // Reduzido de 160 para 150
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       doc.text('Abaixo de 7', margin + 13, legendY + 4);
       doc.text('Entre 7 e 8,9', margin + 93, legendY + 4);
-      doc.text('Acima de 8,9', margin + 173, legendY + 4);
+      doc.text('Acima de 8,9', margin + 163, legendY + 4); // Ajustado para acompanhar o retângulo verde
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       
