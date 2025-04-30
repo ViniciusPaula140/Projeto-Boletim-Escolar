@@ -283,7 +283,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.text('"Muitos são os caminhos, mas a direção é uma só."', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
       
       // Box para informações do aluno
-      doc.setFillColor(240, 240, 250);
+      doc.setFillColor(245, 245, 245); // Cinza claro
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
       doc.setDrawColor(140, 140, 140);
       doc.setLineWidth(0.7);
@@ -291,7 +291,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setLineWidth(0.2);
       doc.setDrawColor(60, 60, 100);
       doc.setFontSize(12);
-      doc.setTextColor(60, 60, 100);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
       doc.text(`Aluno: ${student.name}`, margin + 5, 33);
       doc.text(`Turma: ${student.class}`, margin + 5, 40);
       doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
@@ -449,11 +450,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
           const unitAvg = getUnitAverage(subject.id, unit.id);
           doc.setFont('helvetica', 'bold');
           if (parseFloat(unitAvg) < 7) {
-            doc.setTextColor(229, 57, 53);
+            doc.setTextColor(128, 128, 128); // Cinza para notas abaixo de 7
           } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
-            doc.setTextColor(100, 149, 237);
+            doc.setTextColor(100, 149, 237); // Azul para notas entre 7 e 9
           } else {
-            doc.setTextColor(67, 160, 71);
+            doc.setTextColor(67, 160, 71); // Verde para notas 10
           }
           doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
           doc.setFont('helvetica', 'normal');
@@ -464,11 +465,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         const finalAvg = getFinalAverage(subject.id);
         doc.setFont('helvetica', 'bold');
         if (parseFloat(finalAvg) < 21) {
-          doc.setTextColor(229, 57, 53);
+          doc.setTextColor(128, 128, 128); // Cinza para notas abaixo de 21
         } else if (parseFloat(finalAvg) >= 21 && parseFloat(finalAvg) < 27) {
-          doc.setTextColor(100, 149, 237);
+          doc.setTextColor(100, 149, 237); // Azul para notas entre 21 e 27
         } else {
-          doc.setTextColor(67, 160, 71);
+          doc.setTextColor(67, 160, 71); // Verde para notas acima de 27
         }
         // Centralizar a nota final usando a largura da coluna final
         doc.text(finalAvg, xPos + finalColumnWidth / 2, yPos + 5, { align: 'center' });
@@ -520,7 +521,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         const finalAvg = getFinalAverage(subject.id);
         const value = finalAvg === '-' ? 0 : parseFloat(finalAvg);
         if (value < 21) {
-          doc.setFillColor(229, 57, 53);
+          doc.setFillColor(128, 128, 128); // Cinza para notas abaixo de 21
         } else if (value >= 21 && value < 27) {
           doc.setFillColor(100, 149, 237);
         } else {
@@ -541,7 +542,7 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
       
       // Legenda
-      doc.setFillColor(229, 57, 53);
+      doc.setFillColor(128, 128, 128); // Cinza médio para notas abaixo de 21
       doc.rect(margin, legendY, 10, 5, 'F');
       doc.setFillColor(100, 149, 237);
       doc.rect(margin + 80, legendY, 10, 5, 'F');
@@ -552,8 +553,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       doc.text('Abaixo de 21', margin + 13, legendY + 4);
-      doc.text('Entre 21 e 27', margin + 93, legendY + 4);
-      doc.text('Acima de 27', margin + 173, legendY + 4);
+      doc.text('Entre 21 e 26,9', margin + 93, legendY + 4);
+      doc.text('Acima de 26,9', margin + 173, legendY + 4);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       
@@ -1087,11 +1088,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       // Adicionando a frase abaixo do nome da escola
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0); // Alterado para preto
+      doc.setTextColor(0, 0, 0);
       doc.text('"Muitos são os caminhos, mas a direção é uma só."', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
       
       // Box para informações do aluno
-      doc.setFillColor(240, 240, 250); // Fundo claro
+      doc.setFillColor(245, 245, 245); // Cinza claro
       doc.rect(margin, 25, pageWidth - 2 * margin, 20, 'F');
       doc.setDrawColor(140, 140, 140);
       doc.setLineWidth(0.7);
@@ -1099,7 +1100,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.setLineWidth(0.2);
       doc.setDrawColor(60, 60, 100);
       doc.setFontSize(12);
-      doc.setTextColor(60, 60, 100);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(0, 0, 0);
       doc.text(`Aluno: ${student.name}`, margin + 5, 33);
       doc.text(`Turma: ${student.class}`, margin + 5, 40);
       doc.text(`Turno: ${student.shift}`, pageWidth - margin - 50, 33);
@@ -1209,13 +1211,12 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         // Média da unidade
         const unitAvg = getUnitAverage(subject.id, unitId);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11); // Aumentado de 10 para 11
         if (parseFloat(unitAvg) < 7) {
-          doc.setTextColor(229, 57, 53); // Vermelho para notas abaixo de 7
+          doc.setTextColor(128, 128, 128); // Cinza para notas abaixo de 7
         } else if (parseFloat(unitAvg) >= 7 && parseFloat(unitAvg) < 9) {
-          doc.setTextColor(100, 149, 237); // Azul claro para notas entre 7 e 9
+          doc.setTextColor(100, 149, 237); // Azul para notas entre 7 e 9
         } else {
-          doc.setTextColor(67, 160, 71); // Verde para notas >= 9
+          doc.setTextColor(67, 160, 71); // Verde para notas acima de 9
         }
         doc.text(unitAvg, xPos + dataColWidth / 2, yPos + 5, { align: 'center' });
         doc.setFont('helvetica', 'normal');
@@ -1266,11 +1267,11 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
         const unitAvg = getUnitAverage(subject.id, unitId);
         const value = unitAvg === '-' ? 0 : parseFloat(unitAvg);
         if (value < 7) {
-          doc.setFillColor(229, 57, 53); // Vermelho para notas abaixo de 7
+          doc.setFillColor(128, 128, 128); // Cinza médio para notas abaixo de 7
         } else if (value >= 7 && value < 9) {
-          doc.setFillColor(100, 149, 237); // Azul claro para notas entre 7 e 9
+          doc.setFillColor(100, 149, 237); // Azul para notas entre 7 e 9
         } else {
-          doc.setFillColor(67, 160, 71); // Verde para notas >= 9
+          doc.setFillColor(67, 160, 71); // Verde para notas acima de 9
         }
         const barWidth = (value / maxBarValue) * maxBarWidth;
         doc.rect(margin + labelWidth, barY, barWidth, barHeight, 'F');
@@ -1286,19 +1287,19 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
       doc.rect(margin, graphStartY + subjects.length * (barHeight + barGap) + 5, totalWidth, 1, 'F');
       const legendY = graphStartY + subjects.length * (barHeight + barGap) + 15;
       
-      doc.setFillColor(229, 57, 53); // Vermelho
+      doc.setFillColor(128, 128, 128); // Cinza médio para notas abaixo de 21
       doc.rect(margin, legendY, 10, 5, 'F');
-      doc.setFillColor(100, 149, 237); // Azul claro
+      doc.setFillColor(100, 149, 237);
       doc.rect(margin + 80, legendY, 10, 5, 'F');
-      doc.setFillColor(67, 160, 71); // Verde
+      doc.setFillColor(67, 160, 71);
       doc.rect(margin + 160, legendY, 10, 5, 'F');
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(80, 80, 80);
       doc.text('Abaixo de 7', margin + 13, legendY + 4);
-      doc.text('Entre 7 e 9', margin + 93, legendY + 4);
-      doc.text('Acima de 9', margin + 173, legendY + 4);
+      doc.text('Entre 7 e 8,9', margin + 93, legendY + 4);
+      doc.text('Acima de 8,9', margin + 173, legendY + 4);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       
