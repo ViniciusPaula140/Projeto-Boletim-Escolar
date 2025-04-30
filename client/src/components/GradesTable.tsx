@@ -194,9 +194,23 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
   const updateGrade = (subjectId: number, unitId: number, activityId: number, value: string) => {
     const key = `${subjectId}-${unitId}-${activityId}`;
     
+    // Se o valor estiver vazio, permite limpar o campo
+    if (value === '') {
+      const newGrades = { ...grades };
+      newGrades[key] = '';
+      setGrades(newGrades);
+      eventBus.emit('grades-updated', newGrades);
+      return;
+    }
+    
     // Verifica se o valor é um número válido
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 0 || numValue > 10) {
+    if (isNaN(numValue)) {
+      return;
+    }
+
+    // Verifica se o número está fora do intervalo permitido
+    if (numValue > 10 || numValue < 0) {
       return;
     }
     
@@ -207,16 +221,6 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
     
     // Emite evento para atualizar outros componentes
     eventBus.emit('grades-updated', newGrades);
-    
-    // Aqui seria feita uma chamada para API para salvar a nota
-    // fetch(`/api/grades/${student.id}`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ subjectId, unitId, activityId, value: numValue })
-    // })
-    //   .then(res => res.json())
-    //   .then(data => console.log('Nota salva:', data))
-    //   .catch(err => console.error('Erro ao salvar nota:', err));
   };
   
   /**
@@ -1497,13 +1501,12 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
                       return (
                         <td key={`${subject.id}-${unit.id}-${activity.id}`} className="border-l border-gray-200 p-1">
                           <input 
-                            type="number" 
-                            min="0" 
-                            max="10" 
-                            step="0.5" 
+                            type="text"
+                            pattern="^(?:10|[0-9])(?:\.[0-9])?$"
                             value={grade} 
                             onChange={(e) => updateGrade(subject.id, unit.id, activity.id, e.target.value)}
                             className={`grade-input ${gradeClass} w-14 rounded text-center py-1 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500`}
+                            title="A nota deve ser entre 0 e 10"
                           />
                         </td>
                       );
