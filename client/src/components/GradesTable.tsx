@@ -194,8 +194,8 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
   const updateGrade = (subjectId: number, unitId: number, activityId: number, value: string) => {
     const key = `${subjectId}-${unitId}-${activityId}`;
     
-    // Se o valor estiver vazio, permite limpar o campo
-    if (value === '') {
+    // Se o valor estiver vazio ou for apenas uma vírgula/ponto, permite
+    if (value === '' || value === ',' || value === '.') {
       const newGrades = { ...grades };
       newGrades[key] = '';
       setGrades(newGrades);
@@ -211,10 +211,16 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
 
     // Verifica se o número está fora do intervalo permitido
     if (numValue > 10 || numValue < 0) {
+      toast({
+        title: 'Ops! As notas devem estar entre 0 e 10 😊',
+        variant: 'default',
+        duration: 1800,
+        className: 'text-lg font-medium bg-amber-50 text-amber-800 border border-amber-200'
+      });
       return;
     }
     
-    // Atualiza o estado das notas
+    // Atualiza o estado das notas com o valor exato digitado
     const newGrades = { ...grades };
     newGrades[key] = value;
     setGrades(newGrades);
@@ -1500,14 +1506,17 @@ const GradesTable = forwardRef<any, GradesTableProps>(({ passingGrade }, ref) =>
                       
                       return (
                         <td key={`${subject.id}-${unit.id}-${activity.id}`} className="border-l border-gray-200 p-1">
-                          <input 
-                            type="text"
-                            pattern="^(?:10|[0-9])(?:\.[0-9])?$"
-                            value={grade} 
-                            onChange={(e) => updateGrade(subject.id, unit.id, activity.id, e.target.value)}
-                            className={`grade-input ${gradeClass} w-14 rounded text-center py-1 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500`}
-                            title="A nota deve ser entre 0 e 10"
-                          />
+                          <div className="relative">
+                            <input 
+                              type="number" 
+                              min="0" 
+                              max="10"
+                              step="0.1"
+                              value={grade} 
+                              onChange={(e) => updateGrade(subject.id, unit.id, activity.id, e.target.value)}
+                              className={`grade-input ${gradeClass} w-14 rounded text-center py-1 border border-gray-300 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+                            />
+                          </div>
                         </td>
                       );
                     })}
